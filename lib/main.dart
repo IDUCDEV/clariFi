@@ -4,20 +4,17 @@ import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/home_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+
 
   // Initialize Supabase
   await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    url: 'https://retwjrqfwsffbzogjaao.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJldHdqcnFmd3NmZmJ6b2dqYWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjM3MzMsImV4cCI6MjA3NDg5OTczM30.BD-202H6iaOD_7Q5uOY2ZpHOP0GGAlyC7qwSZvME8t8',
   );
 
   runApp(const MyApp());
