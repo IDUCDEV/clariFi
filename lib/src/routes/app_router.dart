@@ -3,6 +3,7 @@ import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
+import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
 import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,11 @@ class AppRouter {
           name: 'splashScreen',
           path: '/',
           builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          name: 'onboarding',
+          path: '/onboarding',
+          builder: (context, state) => const OnboardingScreen(),
         ),
         GoRoute(
           name: 'login',
