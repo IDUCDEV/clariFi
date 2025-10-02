@@ -7,6 +7,7 @@ class AuthViewModel extends ChangeNotifier {
   bool _isAuthenticated = false;
   bool get isAuthenticated => _isAuthenticated;
 
+
   AuthViewModel(this._supabaseService) {
     // Check initial auth state
     _isAuthenticated = _supabaseService.supabase.auth.currentSession != null;

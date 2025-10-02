@@ -47,7 +47,6 @@ class AppRouter {
         final bool loggedIn = authViewModel.isAuthenticated;
         final String location = state.matchedLocation;
 
-
         if (!loggedIn) {
           return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/'
               ? null
