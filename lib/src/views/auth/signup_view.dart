@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -63,14 +64,25 @@ class _SignupViewState extends State<SignupView> {
         _countryCtl.text.trim(),
         _currencyCtl.text.trim(),
       );
-      print('SignUp Response: $res');
+      
 
-      if (res.user == null) {
+      if (res != null) {
         // Although the user is created, they need to confirm their email.
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro exitoso')),
+          const SnackBar(
+            content: Text('Registro exitoso', style: TextStyle(color: Colors.black)),
+            backgroundColor: AppColors.success,
+          ),
         );
-        GoRouter.of(context).go('/home');
+        _emailCtl.clear();
+        _passwordCtl.clear();
+        _confirmPasswordCtl.clear();
+        _userNameCtl.clear();
+        _fullNameCtl.clear();
+        _countryCtl.clear();
+        _currencyCtl.clear();
+        setState(() => _acceptTerms = false);
+        GoRouter.of(context).go('/login');
       } 
     } on AuthException catch (e) {
       ScaffoldMessenger.of(
@@ -88,7 +100,7 @@ class _SignupViewState extends State<SignupView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF2EFE7),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -160,7 +172,7 @@ class _SignupViewState extends State<SignupView> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _signUp,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -193,6 +205,7 @@ class _SignupViewState extends State<SignupView> {
                 child: GestureDetector(
                   onTap: () {
                     // Navegar a pantalla de login
+                    GoRouter.of(context).go('/login');
                   },
                   child: RichText(
                     text: const TextSpan(
@@ -203,7 +216,7 @@ class _SignupViewState extends State<SignupView> {
                           text: 'Iniciar sesión',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.blue,
+                            color: AppColors.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

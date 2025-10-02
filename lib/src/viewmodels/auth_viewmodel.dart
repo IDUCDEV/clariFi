@@ -16,7 +16,7 @@ class AuthViewModel extends ChangeNotifier {
     });
   }
 
-  Future<AuthResponse> signUp(
+  Future<AuthResponse?> signUp(
     String email,
     String password,
     String userName,
@@ -35,7 +35,20 @@ class AuthViewModel extends ChangeNotifier {
       );
       return res;
     } catch (e) {
-      rethrow;
+      return null;
     }
+  }
+
+  Future<AuthResponse?> login(String email, String password) async {
+    try {
+      final res = await _supabaseService.login(email, password);
+      return res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> logout() async {
+    await _supabaseService.logout();
   }
 }

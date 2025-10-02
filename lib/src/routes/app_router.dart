@@ -5,9 +5,8 @@ import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
-import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 
 class AppRouter {
   final AuthViewModel authViewModel;
@@ -41,10 +40,26 @@ class AppRouter {
         GoRoute(
           name: 'dashboard',
           path: '/dashboard',
-          builder: (context, state) => const TransactionFormView(),
+          builder: (context, state) => const HomeView(),
         ),
       ],
-      
+      redirect: (context, state) {
+        final bool loggedIn = authViewModel.isAuthenticated;
+        final String location = state.matchedLocation;
+
+
+        if (!loggedIn) {
+          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/'
+              ? null
+              : '/login';
+        }
+
+        if (location == '/login' || location == '/signup' || location == '/' || location == '/onboarding') {
+          return '/dashboard';
+        }
+
+        return null;
+      },
     );
   }
 }

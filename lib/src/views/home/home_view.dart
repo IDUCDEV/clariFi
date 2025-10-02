@@ -9,6 +9,7 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = Provider.of<AuthViewModel>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
@@ -16,7 +17,7 @@ class HomeView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              //Provider.of<AuthViewModel>(context, listen: false).signOut();
+              authViewModel.logout();
             },
           )
         ],

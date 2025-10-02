@@ -8,7 +8,7 @@ class SupabaseService {
   /*
     authentication methods
   */
-  Future<AuthResponse> signUp(
+  Future<AuthResponse?> signUp(
     String email,
     String password,
     String userName,
@@ -29,8 +29,23 @@ class SupabaseService {
       );
       return res;
     } catch (e) {
-      //print('Error en registro: $e');
-      rethrow;
+      return null;
     }
+  }
+
+  Future<AuthResponse?> login(String email, String password) async {
+    try {
+      final res = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      return res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> logout() async {
+    await supabase.auth.signOut();
   }
 }
