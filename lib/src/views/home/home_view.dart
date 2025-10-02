@@ -16,7 +16,7 @@ class HomeView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              Provider.of<AuthViewModel>(context, listen: false).signOut();
+              //Provider.of<AuthViewModel>(context, listen: false).signOut();
             },
           )
         ],

@@ -12,11 +12,4 @@ class TransactionViewModel extends ChangeNotifier {
   List<dynamic> get transactions => _transactions;
   bool get isLoading => _isLoading;
 
-  Future<void> loadTransactions() async {
-    _isLoading = true;
-    notifyListeners();
-    _transactions = await _supabaseService.fetchTransactions();
-    _isLoading = false;
-    notifyListeners();
-  }
 }

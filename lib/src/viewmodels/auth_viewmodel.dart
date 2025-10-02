@@ -1,41 +1,41 @@
-
 import 'package:clarifi_app/src/services/supabase_service.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SupabaseService _supabaseService;
   bool _isAuthenticated = false;
+  bool get isAuthenticated => _isAuthenticated;
 
   AuthViewModel(this._supabaseService) {
     // Check initial auth state
-    _isAuthenticated = _supabaseService.client.auth.currentSession != null;
-    _supabaseService.client.auth.onAuthStateChange.listen((authState) {
+    _isAuthenticated = _supabaseService.supabase.auth.currentSession != null;
+    _supabaseService.supabase.auth.onAuthStateChange.listen((authState) {
       _isAuthenticated = authState.session != null;
       notifyListeners();
     });
   }
 
-  bool get isAuthenticated => _isAuthenticated;
-
-  Future<void> signUp(String email, String password) async {
+  Future<AuthResponse> signUp(
+    String email,
+    String password,
+    String userName,
+    String fullName,
+    String country,
+    String currency,
+  ) async {
     try {
-      await _supabaseService.client.auth.signUp(email: email, password: password);
+      final res = await _supabaseService.signUp(
+        email,
+        password,
+        userName,
+        fullName,
+        country,
+        currency,
+      );
+      return res;
     } catch (e) {
-      // Handle error
-      print(e);
+      rethrow;
     }
-  }
-
-  Future<void> login(String email, String password) async {
-    try {
-      await _supabaseService.client.auth.signInWithPassword(email: email, password: password);
-    } catch (e) {
-      // Handle error
-      print(e);
-    }
-  }
-
-  Future<void> signOut() async {
-    await _supabaseService.client.auth.signOut();
   }
 }

@@ -39,8 +39,8 @@ class AppRouter {
           builder: (context, state) => const SignupView(),
         ),
         GoRoute(
-          name: 'new-transaction',
-          path: '/transactions/new',
+          name: 'dashboard',
+          path: '/dashboard',
           builder: (context, state) => const TransactionFormView(),
         ),
       ],

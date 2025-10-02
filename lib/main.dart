@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       providers: [
         // The SupabaseService will be available to all ViewModels
         Provider<SupabaseService>(
-          create: (_) => SupabaseService(Supabase.instance.client),
+          create: (_) => SupabaseService(),
         ),
         // AuthViewModel depends on SupabaseService
         ChangeNotifierProvider<AuthViewModel>(
