@@ -48,4 +48,15 @@ class SupabaseService {
   Future<void> logout() async {
     await supabase.auth.signOut();
   }
+
+
+  Future<bool> recoverPassword(String email) async {
+    try {
+      await supabase.auth.resetPasswordForEmail(email);
+      return true;
+    } catch (e) {
+      // Consider logging the error or handling it appropriately
+      return false;
+    }
+  }
 }

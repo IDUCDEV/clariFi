@@ -1,6 +1,7 @@
 
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
+import 'package:clarifi_app/src/views/auth/recovery_password.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
@@ -38,6 +39,11 @@ class AppRouter {
           builder: (context, state) => const SignupView(),
         ),
         GoRoute(
+          name: 'recovery',
+          path: '/recovery',
+          builder: (context, state) => const RecoveryPassword(),
+        ),
+        GoRoute(
           name: 'dashboard',
           path: '/dashboard',
           builder: (context, state) => const HomeView(),
@@ -48,7 +54,7 @@ class AppRouter {
         final String location = state.matchedLocation;
 
         if (!loggedIn) {
-          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/'
+          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/' || location == '/recovery'
               ? null
               : '/login';
         }

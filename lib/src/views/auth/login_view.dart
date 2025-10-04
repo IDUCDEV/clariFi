@@ -164,7 +164,7 @@ class _LoginViewState extends State<LoginView> {
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    
+                    GoRouter.of(context).go('/recovery');
                   },
                   child: RichText(
                     text: const TextSpan(
@@ -184,6 +184,7 @@ class _LoginViewState extends State<LoginView> {
                   ),
                 ),
               ),
+              const SizedBox(height: 26),
             ],
           ),
         ),

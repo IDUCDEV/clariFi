@@ -52,4 +52,13 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> logout() async {
     await _supabaseService.logout();
   }
+
+  Future<bool> recoverPassword(String email) async {
+    try {
+      final res = await _supabaseService.recoverPassword(email);
+      return res;
+    } catch (e) {
+      return false;
+    }
+  }
 }
