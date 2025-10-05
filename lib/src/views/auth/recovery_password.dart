@@ -34,15 +34,15 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     setState(() => _isLoading = true);
     try {
-      final success = await authViewModel.recoverPassword(_email.text.trim());
-      
-      if (success == true) {
+      final result = await authViewModel.recoverPassword(_email.text.trim());
+
+      if (result!['success'] == true) {
         setState(() {
           isSended = true;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El correo electrónico no está registrado en nuestro sistema', style: TextStyle(color: AppColors.background)), backgroundColor: AppColors.error,),
+          SnackBar(content: Text(result!['message'], style: const TextStyle(color: AppColors.background)), backgroundColor: AppColors.error,),
         );
       }
     } catch (e) {
