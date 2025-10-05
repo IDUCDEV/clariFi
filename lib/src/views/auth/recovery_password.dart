@@ -18,6 +18,7 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
 
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
+  bool isSended = false;
 
   bool _isLoading = false;
 
@@ -35,13 +36,19 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
     try {
       final success = await authViewModel.recoverPassword(_email.text.trim());
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        /*
+          ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Enlace de recuperación enviado'),
             backgroundColor: AppColors.success,
           ),
         );
         GoRouter.of(context).go('/login');
+        */
+        setState(() {
+          isSended = true;
+        });
+        
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error al enviar el enlace')),
@@ -70,7 +77,65 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
         ),
         title: const Text('Has olvidado tu contraseña', style: TextStyle(fontWeight: FontWeight.bold),),
       ),
-      body: SingleChildScrollView(
+      body: isSended ? Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              //const Icon(Icons.check_circle, color: AppColors.success, size: 100),
+              Image.asset(
+                'lib/assets/Overlay.png',
+                width: 230,
+                height: 230,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Te hemos enviado un enlace a tu correo electrónico para restablecer, revisa tu bandeja de entrada y sigue las instruccines para restablecerla.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                              onPressed: (){
+                                GoRouter.of(context).go("/login");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: double.infinity,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Ir a Iniciar sesión',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                            ),
+              ),
+              const SizedBox(height: 20),
+              
+            ],
+          ),
+        ),
+      ) : SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
