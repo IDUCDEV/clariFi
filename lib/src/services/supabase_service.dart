@@ -50,13 +50,27 @@ class SupabaseService {
   }
 
 
-  Future<bool> recoverPassword(String email) async {
-    try {
-      await supabase.auth.resetPasswordForEmail(email);
-      return true;
-    } catch (e) {
-      // Consider logging the error or handling it appropriately
-      return false;
-    }
+Future<Map<String, dynamic>> recoverPassword(String email) async {
+  try {
+    await supabase.auth.resetPasswordForEmail(email);
+
+    return {
+      'success': true,
+      'message': 'Correo de recuperación enviado correctamente.'
+    };
+  } on AuthException catch (e) {
+    // Errores conocidos de Supabase (por ejemplo, email no registrado)
+    return {
+      'success': false,
+      'message': e.message,
+    };
+  } catch (e) {
+    // Otros errores (red, configuración, etc.)
+    return {
+      'success': false,
+      'message': 'Ha ocurrido un error inesperado. Inténtalo más tarde.',
+    };
   }
+}
+
 }

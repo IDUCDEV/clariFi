@@ -35,23 +35,14 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
     setState(() => _isLoading = true);
     try {
       final success = await authViewModel.recoverPassword(_email.text.trim());
-      if (success) {
-        /*
-          ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Enlace de recuperación enviado'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        GoRouter.of(context).go('/login');
-        */
+      
+      if (success == true) {
         setState(() {
           isSended = true;
         });
-        
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al enviar el enlace')),
+          const SnackBar(content: Text('El correo electrónico no está registrado en nuestro sistema', style: TextStyle(color: AppColors.background)), backgroundColor: AppColors.error,),
         );
       }
     } catch (e) {

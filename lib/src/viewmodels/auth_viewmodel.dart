@@ -56,7 +56,7 @@ class AuthViewModel extends ChangeNotifier {
   Future<bool> recoverPassword(String email) async {
     try {
       final res = await _supabaseService.recoverPassword(email);
-      return res;
+      return res['success'];
     } catch (e) {
       return false;
     }

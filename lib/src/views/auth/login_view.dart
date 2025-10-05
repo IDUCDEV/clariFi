@@ -51,6 +51,15 @@ class _LoginViewState extends State<LoginView> {
         _passwordCtl.clear();
         // Navigate to dashboard after login
         GoRouter.of(context).go('/dashboard');
+      }else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al iniciar sesión, Correo o contraseña incorrectos', style: TextStyle(color: AppColors.background)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        _emailCtl.clear();
+        _passwordCtl.clear();
       }
     } on AuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

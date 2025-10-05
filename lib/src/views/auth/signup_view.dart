@@ -83,7 +83,22 @@ class _SignupViewState extends State<SignupView> {
         _currencyCtl.clear();
         setState(() => _acceptTerms = false);
         GoRouter.of(context).go('/login');
-      } 
+      } else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error en el registro', style: TextStyle(color: AppColors.background)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        _emailCtl.clear();
+        _passwordCtl.clear();
+        _confirmPasswordCtl.clear();
+        _userNameCtl.clear();
+        _fullNameCtl.clear();
+        _countryCtl.clear();
+        _currencyCtl.clear();
+        setState(() => _acceptTerms = false);
+      }
     } on AuthException catch (e) {
       ScaffoldMessenger.of(
         context,
