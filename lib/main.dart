@@ -57,9 +57,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleLink(String link) {
+    print('Handling link: $link');
     final uri = Uri.parse(link);
+    print('Parsed URI: scheme=${uri.scheme}, path=${uri.path}');
     if (uri.scheme == 'clarifi' && uri.path == '/reset-password') {
+      print('Navigating to /reset-password');
       _router?.go('/reset-password');
+    } else {
+      print('Link does not match criteria');
     }
   }
 

@@ -2,9 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
   final SupabaseClient supabase = Supabase.instance.client;
-
   SupabaseService();
-
   /*
     authentication methods
   */
@@ -51,6 +49,10 @@ class SupabaseService {
 
   Future<bool> recoverPassword(String email) async {
     try {
+      final isEmailExists = await checkEmailExists(email);
+      if (!isEmailExists) {
+        return false;
+      }
       final response = await supabase.auth.resetPasswordForEmail(
         email,
         redirectTo: 'clarifi://reset-password',
@@ -69,6 +71,16 @@ class SupabaseService {
       return true;
     } catch (e) {
       //print('Error in updatePassword: $e');
+      return false;
+    }
+  }
+
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final response = await supabase.rpc('check_email_exists', params: {'email_input': email});
+      return response as bool;
+    } catch (e) {
+      //print('Error in checkEmailExists: $e');
       return false;
     }
   }

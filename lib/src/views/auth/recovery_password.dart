@@ -68,7 +68,8 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
         title: const Text('Has olvidado tu contraseña', style: TextStyle(fontWeight: FontWeight.bold),),
       ),
       body: isSended ? Center(
-        child: Padding(
+        child: SingleChildScrollView(
+          child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -124,7 +125,7 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
               
             ],
           ),
-        ),
+        ),)
       ) : SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
