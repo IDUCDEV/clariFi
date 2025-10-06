@@ -36,11 +36,11 @@ class _ChangePasswordState extends State<ChangePassword> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Contraseña cambiada exitosamente'),
+            content: Text('Contraseña cambiada exitosamente', style: TextStyle(color: Colors.black)),
             backgroundColor: AppColors.success,
           ),
         );
-        GoRouter.of(context).go('/login');
+        GoRouter.of(context).go('/dashboard');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error al cambiar la contraseña')),
@@ -60,6 +60,10 @@ class _ChangePasswordState extends State<ChangePassword> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cambiar Contraseña'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        )
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

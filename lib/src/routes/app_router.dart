@@ -60,7 +60,7 @@ class AppRouter {
         final String location = state.matchedLocation;
 
         if (!loggedIn) {
-          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/' || location == '/recovery'
+          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/' || location == '/recovery' || location == '/reset-password'
               ? null
               : '/login';
         }

@@ -12,6 +12,7 @@ class AuthViewModel extends ChangeNotifier {
     // Check initial auth state
     _isAuthenticated = _supabaseService.supabase.auth.currentSession != null;
     _supabaseService.supabase.auth.onAuthStateChange.listen((authState) {
+      //print('Auth state changed: session exists = ${authState.session != null}');
       _isAuthenticated = authState.session != null;
       notifyListeners();
     });

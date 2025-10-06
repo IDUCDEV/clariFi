@@ -39,15 +39,7 @@ class _MyAppState extends State<MyApp> {
     _handleIncomingLinks();
   }
 
-  void _handleIncomingLinks() async {
-    // Handle initial link after frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final initialLink = await _appLinks.getInitialLink();
-      if (initialLink != null) {
-        _handleLink(initialLink.toString());
-      }
-    });
-
+  void _handleIncomingLinks() {
     // Handle link stream
     _appLinks.uriLinkStream.listen((Uri? link) {
       if (link != null) {
@@ -56,15 +48,41 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _handleLink(String link) {
-    print('Handling link: $link');
+  void _handleLink(String link) async {
+    //print('Handling link: $link');
     final uri = Uri.parse(link);
-    print('Parsed URI: scheme=${uri.scheme}, path=${uri.path}');
-    if (uri.scheme == 'clarifi' && uri.path == '/reset-password') {
-      print('Navigating to /reset-password');
+    //print('Parsed URI: scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}, query=${uri.query}, fragment=${uri.fragment}');
+    if (uri.scheme == 'clarifi' && uri.host == 'reset-password') {
+      final code = uri.queryParameters['code'];
+      if (code != null) {
+        try {
+          //print('Exchanging code for session...');
+          await Supabase.instance.client.auth.exchangeCodeForSession(code);
+          //print('Session exchanged successfully');
+        } catch (e) {
+          //print('Error exchanging code: $e');
+        }
+      } else {
+        // Fallback to fragment parsing if needed
+        final fragmentParams = Uri.splitQueryString(uri.fragment);
+        final accessToken = fragmentParams['access_token'];
+        final type = fragmentParams['type'];
+
+        if (accessToken != null && type == 'recovery') {
+          try {
+            //print('Setting session from fragment...');
+            await Supabase.instance.client.auth.setSession(accessToken);
+            //print('Session set successfully');
+          } catch (e) {
+            //print('Error setting session: $e');
+          }
+        }
+      }
+
+      //print('Navigating to /reset-password');
       _router?.go('/reset-password');
     } else {
-      print('Link does not match criteria');
+      //print('Link does not match criteria');
     }
   }
 
@@ -94,6 +112,14 @@ class _MyAppState extends State<MyApp> {
         builder: (context) {
           // The router needs access to the AuthViewModel for redirection
           _router = AppRouter(context.read<AuthViewModel>()).router;
+
+          // Handle initial link after router is created
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            final initialLink = await _appLinks.getInitialLink();
+            if (initialLink != null) {
+              _handleLink(initialLink.toString());
+            }
+          });
 
           return MaterialApp.router(
             title: 'Clarifi App',

@@ -23,6 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
         progressValue += 0.3333; // Increment progress by 33.33% every second
         if (progressValue >= 1.0) {
           timer.cancel();
+          //print('SplashScreen: navigating to /onboarding');
           GoRouter.of(context).go('/onboarding');
         }
       });  
