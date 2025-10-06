@@ -45,6 +45,9 @@ dependencies:
   supabase_flutter: ^2.10.2
   flutter_dotenv: ^6.0.0
 
+  # Deep linking
+  app_links: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -71,6 +74,10 @@ flutter:
   assets:
     - lib/assets/logo.png
     - lib/assets/logo-figura.png
+    - lib/assets/onboarding-page-1.png
+    - lib/assets/onboarding-page-2.png
+    - lib/assets/onboarding-page-3.png
+    - lib/assets/Overlay.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
