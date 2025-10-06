@@ -49,42 +49,17 @@ class SupabaseService {
     await supabase.auth.signOut();
   }
 
-
-  Future<Map<String, dynamic>> recoverPassword(String email) async {
+  Future<bool> recoverPassword(String email) async {
     try {
       final response = await supabase.auth.resetPasswordForEmail(
         email,
         redirectTo: 'clarifi://reset-password',
       );
 
-      return {
-        'success': true,
-        'message': 'Correo de recuperación enviado correctamente. Revisa tu bandeja de entrada.'
-      };
-    } on AuthException catch (e) {
-      // Errores específicos de Supabase
-      String errorMessage;
-      
-      switch (e.message) {
-        case 'User not found':
-          errorMessage = 'No existe una cuenta con este email.';
-          break;
-        case 'Email rate limit exceeded':
-          errorMessage = 'Demasiados intentos. Espera unos minutos.';
-          break;
-        default:
-          errorMessage = e.message;
-      }
-      
-      return {
-        'success': false,
-        'message': errorMessage,
-      };
+      return true;
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Error de conexión. Verifica tu internet e intenta nuevamente.',
-      };
+      //print('Error in recoverPassword: $e');
+      return false;
     }
   }
 
@@ -97,5 +72,4 @@ class SupabaseService {
       return false;
     }
   }
-
 }

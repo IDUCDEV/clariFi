@@ -7,9 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class RecoveryPassword  extends StatefulWidget{
-
   const RecoveryPassword({super.key});
-
   @override
   State<RecoveryPassword> createState() => _RecoveryPasswordState();
 }
@@ -36,14 +34,15 @@ class _RecoveryPasswordState extends State<RecoveryPassword> {
     try {
       final result = await authViewModel.recoverPassword(_email.text.trim());
 
-      if (result!['success'] == true) {
+      if (result != null) {
         setState(() {
           isSended = true;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result!['message'], style: const TextStyle(color: AppColors.background)), backgroundColor: AppColors.error,),
+          SnackBar(content: Text("correo electronico no registrado", style: const TextStyle(color: AppColors.background)), backgroundColor: AppColors.error,),
         );
+        _email.clear();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -56,7 +56,14 @@ class AuthViewModel extends ChangeNotifier {
   Future<Map<String, dynamic>?> recoverPassword(String email) async {
     try {
       final res = await _supabaseService.recoverPassword(email);
-      return res;
+      if (res) {
+        return {
+          'success': true,
+          'message': 'Correo de recuperación enviado correctamente. Revisa tu bandeja de entrada.'
+        };
+      } else {
+        return null;
+      }
     } catch (e) {
       return null;
     }
