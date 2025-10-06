@@ -88,4 +88,14 @@ class SupabaseService {
     }
   }
 
+  Future<bool> updatePassword(String password) async {
+    try {
+      await supabase.auth.updateUser(UserAttributes(password: password));
+      return true;
+    } catch (e) {
+      //print('Error in updatePassword: $e');
+      return false;
+    }
+  }
+
 }

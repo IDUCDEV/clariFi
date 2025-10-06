@@ -1,5 +1,6 @@
 
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
+import 'package:clarifi_app/src/views/auth/change_password.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
 import 'package:clarifi_app/src/views/auth/recovery_password.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
@@ -42,6 +43,11 @@ class AppRouter {
           name: 'recovery',
           path: '/recovery',
           builder: (context, state) => const RecoveryPassword(),
+        ),
+        GoRoute(
+          name: 'changePassword',
+          path: '/reset-password',
+          builder: (context, state) => const ChangePassword(),
         ),
         GoRoute(
           name: 'dashboard',

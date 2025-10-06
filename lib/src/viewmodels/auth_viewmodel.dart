@@ -61,4 +61,13 @@ class AuthViewModel extends ChangeNotifier {
       return null;
     }
   }
+
+  Future<bool> updatePassword(String password) async {
+    try {
+      final res = await _supabaseService.updatePassword(password);
+      return res;
+    } catch (e) {
+      return false;
+    }
+  }
 }

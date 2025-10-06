@@ -4,8 +4,10 @@ import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/home_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app_links/app_links.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,8 +22,46 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  GoRouter? _router;
+  final _appLinks = AppLinks();
+
+  @override
+  void initState() {
+    super.initState();
+    _handleIncomingLinks();
+  }
+
+  void _handleIncomingLinks() async {
+    // Handle initial link after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final initialLink = await _appLinks.getInitialLink();
+      if (initialLink != null) {
+        _handleLink(initialLink.toString());
+      }
+    });
+
+    // Handle link stream
+    _appLinks.uriLinkStream.listen((Uri? link) {
+      if (link != null) {
+        _handleLink(link.toString());
+      }
+    });
+  }
+
+  void _handleLink(String link) {
+    final uri = Uri.parse(link);
+    if (uri.scheme == 'clarifi' && uri.path == '/reset-password') {
+      _router?.go('/reset-password');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,15 +88,15 @@ class MyApp extends StatelessWidget {
       child: Builder(
         builder: (context) {
           // The router needs access to the AuthViewModel for redirection
-          final router = AppRouter(context.read<AuthViewModel>()).router;
-          
+          _router = AppRouter(context.read<AuthViewModel>()).router;
+
           return MaterialApp.router(
             title: 'Clarifi App',
             theme: ThemeData(
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
-            routerConfig: router,
+            routerConfig: _router,
           );
         }
       ),

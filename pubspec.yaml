@@ -45,6 +45,9 @@ dependencies:
   supabase_flutter: ^2.10.2
   flutter_dotenv: ^6.0.0
 
+  # Deep linking
+  app_links: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
