@@ -53,7 +53,8 @@ class SupabaseService {
       if (!isEmailExists) {
         return false;
       }
-      final response = await supabase.auth.resetPasswordForEmail(
+      
+      await supabase.auth.resetPasswordForEmail(
         email,
         redirectTo: 'clarifi://reset-password',
       );
