@@ -1,9 +1,8 @@
-
-import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/widgets/BudgetItemToListBudgetDarshboard.dart';
 import 'package:clarifi_app/src/widgets/budgetsVisualizer.dart';
 import 'package:clarifi_app/src/widgets/listDropDownBudgets.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardBudgets extends StatelessWidget{
 
@@ -18,7 +17,11 @@ class DashboardBudgets extends StatelessWidget{
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Presupuestos', textAlign: TextAlign.center,),
-            ElevatedButton(onPressed: (){}, child: const Icon(Icons.add, size: 20, fontWeight: FontWeight.bold,)),
+            ElevatedButton(
+              onPressed: (){
+                GoRouter.of(context).go('/addBudget');
+              }, 
+              child: const Icon(Icons.add, size: 20, fontWeight: FontWeight.bold,)),
           ],
         ),
       ),
@@ -42,6 +45,21 @@ class DashboardBudgets extends StatelessWidget{
               const SizedBox(height: 16.0),
               ListDropDownBudgets(),
               const SizedBox(height: 16.0),
+              Budgetitemtolistbudgetdarshboard(
+                title: "Comestibles",
+                budget: "1000",
+                spent: "500",
+              ),
+              Budgetitemtolistbudgetdarshboard(
+                title: "Comestibles",
+                budget: "1000",
+                spent: "500",
+              ),
+              Budgetitemtolistbudgetdarshboard(
+                title: "Comestibles",
+                budget: "1000",
+                spent: "500",
+              ),
               Budgetitemtolistbudgetdarshboard(
                 title: "Comestibles",
                 budget: "1000",
