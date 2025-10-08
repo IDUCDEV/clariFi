@@ -70,14 +70,15 @@ class AppRouter {
         GoRoute(
           name: 'editBudget',
           path: '/editBudget',
-          builder: (context, state) => const EditBudget(
+          builder: (context, state) => EditBudget(
             budgetId: '',
-            title: '',
-            amount: 0,
-            startDate: null,
-            endDate: null,
-            threshold: 0,
-            category: '',
+            nameBudget: 'Comidas y Restaurantes',
+            amount: 1000.0,
+            startDate: DateTime(2023, 10, 1),
+            endDate: DateTime(2024, 10, 31),
+            threshold: "80",
+            category: 'Restaurantes',
+            periodo: 'Semanal',
           ),
         ),
       ],

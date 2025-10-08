@@ -16,7 +16,7 @@ class _CreateBudgetState extends State<CreateBudget> {
   final _nameBudgetController = TextEditingController();
   final _categoryBudgetController = TextEditingController();
   final _amountController = TextEditingController();
-  String _selectedCategory = 'Mensual';
+  String _selectedPeriod = 'Mensual';
   DateTime? startDate;
   DateTime? endDate;
   int? _selectedThreshold = 50;
@@ -201,10 +201,10 @@ class _CreateBudgetState extends State<CreateBudget> {
                     label: Text('Anual'),
                   ),
                 ],
-                selected: <String>{_selectedCategory},
+                selected: <String>{_selectedPeriod},
                 onSelectionChanged: (newSelection) {
                   setState(() {
-                    _selectedCategory = newSelection.first;
+                    _selectedPeriod = newSelection.first;
                   });
                 },
                 style: ButtonStyle(
