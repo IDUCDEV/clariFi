@@ -1,11 +1,24 @@
-
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
+import 'package:clarifi_app/src/views/accounts/create_account_view.dart';
+import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  void _showCreateAccountModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) => const CreateAccountView(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +39,10 @@ class HomeView extends StatelessWidget {
         child: Text('Home View'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/transactions/new'),
-        child: const Icon(Icons.add),
+        onPressed: () => _showCreateAccountModal(context),
+        tooltip: 'Crear Nueva Cuenta',
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
