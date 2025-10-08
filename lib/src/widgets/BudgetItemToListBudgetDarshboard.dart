@@ -1,5 +1,6 @@
 import "package:clarifi_app/src/colors/colors.dart";
 import "package:flutter/material.dart";
+import "package:go_router/go_router.dart";
 
 class Budgetitemtolistbudgetdarshboard extends StatelessWidget {
   final String title;
@@ -43,6 +44,7 @@ class Budgetitemtolistbudgetdarshboard extends StatelessWidget {
                   icon: const Icon(Icons.more_vert, color: Colors.black),
                   onPressed: () {
                     // Handle edit action
+                    GoRouter.of(context).go('/editBudget');
                   },
                 ),
               ],

@@ -6,6 +6,7 @@ import 'package:clarifi_app/src/views/auth/recovery_password.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/budgets/create_budget.dart';
 import 'package:clarifi_app/src/views/budgets/dashboard_budgets.dart';
+import 'package:clarifi_app/src/views/budgets/edit_budget.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
@@ -65,6 +66,19 @@ class AppRouter {
           name: 'addBudget',
           path: '/addBudget',
           builder: (context, state) => const CreateBudget(),
+        ),
+        GoRoute(
+          name: 'editBudget',
+          path: '/editBudget',
+          builder: (context, state) => const EditBudget(
+            budgetId: '',
+            title: '',
+            amount: 0,
+            startDate: null,
+            endDate: null,
+            threshold: 0,
+            category: '',
+          ),
         ),
       ],
       redirect: (context, state) {
