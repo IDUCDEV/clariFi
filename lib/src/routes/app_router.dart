@@ -5,9 +5,16 @@ import 'package:clarifi_app/src/views/auth/login_view.dart';
 import 'package:clarifi_app/src/views/auth/recovery_password.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
+import 'package:clarifi_app/src/views/home/accounts_view.dart';
+import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
+import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
-import 'package:clarifi_app/src/views/visualization_reports/financial_summary.dart';
+import 'package:clarifi_app/src/views/navigation/main_navigation_view.dart';
+import 'package:clarifi_app/src/views/budgets/budgets_view.dart';
+import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
+import 'package:clarifi_app/src/views/reports/reports_view.dart';
+import 'package:clarifi_app/src/views/settings/settings_view.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -20,7 +27,7 @@ class AppRouter {
       refreshListenable: authViewModel,
       initialLocation: '/',
       routes: [
-        
+        // Rutas sin NavigationBar
         GoRoute(
           name: 'splashScreen',
           path: '/',
@@ -51,17 +58,72 @@ class AppRouter {
           path: '/reset-password',
           builder: (context, state) => const ChangePassword(),
         ),
+        
+        // ShellRoute para mantener NavigationBar visible
+        ShellRoute(
+          builder: (context, state, child) {
+            return MainNavigationView(child: child);
+          },
+          routes: [
+            GoRoute(
+              name: 'home',
+              path: '/home',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: const HomeView(),
+              ),
+            ),
+            GoRoute(
+              name: 'budgets',
+              path: '/budgets',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: const BudgetsView(),
+              ),
+            ),
+            GoRoute(
+              name: 'transactions',
+              path: '/transactions',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: const TransactionsView(),
+              ),
+            ),
+            GoRoute(
+              name: 'reports',
+              path: '/reports',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: const ReportsView(),
+              ),
+            ),
+            GoRoute(
+              name: 'settings',
+              path: '/settings',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: const SettingsView(),
+              ),
+            ),
+            // Rutas anidadas que también muestran el NavigationBar
+            GoRoute(
+              name: 'accountsList',
+              path: '/accounts/list',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: const AccountsListView(),
+              ),
+            ),
+          ],
+        ),
+        
+        // Rutas adicionales (sin NavigationBar)
         GoRoute(
-          name: 'dashboard',
-          path: '/dashboard',
-          builder: (context, state) => const HomeView(),
+          name: 'accounts',
+          path: '/accounts',
+          builder: (context, state) => const AccountsView(),
+        ),
+        GoRoute(
+          name: 'transactionForm',
+          path: '/transactions/new',
+          builder: (context, state) => const TransactionFormView(),
         ),
 
-        GoRoute(
-          name: 'financial_summary',
-          path: '/financial',
-          builder: (context, state) => const FinancialSummaryScreen(),
-        )
+   
       ],
       redirect: (context, state) {
         final bool loggedIn = authViewModel.isAuthenticated;
@@ -74,7 +136,7 @@ class AppRouter {
         }
 
         if (location == '/login' || location == '/signup' || location == '/' || location == '/onboarding') {
-          return '/dashboard';
+          return '/home';
         }
 
         return null;
