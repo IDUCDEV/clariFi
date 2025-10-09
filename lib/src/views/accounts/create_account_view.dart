@@ -1,20 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/constants/account_constants.dart';
 import 'package:clarifi_app/src/widgets/form/custom_text_field.dart';
 import 'package:clarifi_app/src/widgets/form/custom_dropdown.dart';
 import 'package:clarifi_app/src/widgets/form/labeled_switch.dart';
+import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 
 /// Vista modal para crear una nueva cuenta
 /// Implementa la HU-03.1: Crear Nueva Cuenta
 /// 
 /// Esta vista sigue los principios SOLID:
-/// - SRP: La vista solo se encarga de la UI, delegando la lógica a un ViewModel (futuro)
+/// - SRP: La vista solo se encarga de la UI, delegando la lógica de negocio al AccountViewModel
 /// - OCP: Extensible para agregar nuevos tipos de validación sin modificar el código base
-/// - DIP: Depende de abstracciones (widgets personalizados) en lugar de implementaciones concretas
+/// - DIP: Depende de abstracciones (AccountViewModel) en lugar de implementaciones concretas
+/// 
+/// Características:
+/// - Validación de formulario en tiempo real
+/// - Validación de nombre único mediante el ViewModel
+/// - Manejo de estados de carga y errores
+/// - Feedback visual al usuario (SnackBars)
+/// - Guardado real en Supabase mediante AccountViewModel
+/// - Redirección opcional a la lista de cuentas
 class CreateAccountView extends StatefulWidget {
-  const CreateAccountView({super.key});
+  final bool redirectToList;
+  
+  const CreateAccountView({
+    super.key,
+    this.redirectToList = false,
+  });
 
   @override
   State<CreateAccountView> createState() => _CreateAccountViewState();
@@ -63,20 +79,34 @@ class CreateAccountView extends StatefulWidget {
   }
 
   /// Maneja la creación de la cuenta
-  void _handleCreateAccount() {
+  Future<void> _handleCreateAccount() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // TODO: Integrar con AccountViewModel para guardar en la BD
-      // Por ahora solo simula la creación
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          
+      // Obtener el ViewModel
+      final accountViewModel = context.read<AccountViewModel>();
+
+      // Parsear el balance inicial
+      final initialBalance = double.tryParse(_initialBalanceController.text) ?? 0.0;
+
+      // Intentar crear la cuenta usando el ViewModel
+      final success = await accountViewModel.createAccount(
+        name: _nameController.text.trim(),
+        type: _selectedAccountType!,
+        currency: _selectedCurrency!,
+        balance: initialBalance,
+        isDefault: _isDefaultAccount,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (success) {
+          // Mostrar mensaje de éxito
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Cuenta creada exitosamente'),
@@ -84,10 +114,27 @@ class CreateAccountView extends StatefulWidget {
               duration: Duration(seconds: 2),
             ),
           );
+
+          // Cerrar el modal
+          Navigator.of(context).pop(true);
           
-          Navigator.of(context).pop(true); // Retorna true para indicar éxito
+          // Redirigir a la lista de cuentas si está configurado
+          if (widget.redirectToList) {
+            context.go('/accounts/list');
+          }
+        } else {
+          // Mostrar mensaje de error del ViewModel
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                accountViewModel.errorMessage ?? 'Error al crear la cuenta',
+              ),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
-      });
+      }
     }
   }
 

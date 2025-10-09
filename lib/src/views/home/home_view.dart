@@ -16,7 +16,9 @@ class _HomeViewState extends State<HomeView> {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (BuildContext context) => const CreateAccountView(),
+      builder: (BuildContext context) => const CreateAccountView(
+        redirectToList: true, // Redirigir a la lista después de crear
+      ),
     );
   }
 

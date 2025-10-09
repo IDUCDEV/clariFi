@@ -6,6 +6,7 @@ import 'package:clarifi_app/src/views/auth/recovery_password.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/home/accounts_view.dart';
+import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
 import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
@@ -65,6 +66,11 @@ class AppRouter {
           name: 'accounts',
           path: '/accounts',
           builder: (context, state) => const AccountsView(),
+        ),
+        GoRoute(
+          name: 'accountsList',
+          path: '/accounts/list',
+          builder: (context, state) => const AccountsListView(),
         ),
         GoRoute(
           name: 'transactionForm',
