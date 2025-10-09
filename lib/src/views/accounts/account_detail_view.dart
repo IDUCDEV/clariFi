@@ -102,34 +102,46 @@ class _AccountDetailViewState extends State<AccountDetailView> {
     }
   }
 
-  /// Elimina la cuenta
+  /// Elimina la cuenta con opción de transferir saldo
   Future<void> _deleteAccount() async {
-    // Confirmar eliminación
-    final confirmed = await showDialog<bool>(
+    final accountViewModel = context.read<AccountViewModel>();
+    
+    // Obtener todas las cuentas excepto la actual
+    final otherAccounts = accountViewModel.accounts
+        .where((account) => account.id != widget.account.id)
+        .toList();
+    
+    // Mostrar diálogo de eliminación
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar cuenta'),
-        content: Text('¿Estás seguro de que deseas eliminar "${widget.account.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Eliminar'),
-          ),
-        ],
+      builder: (context) => _DeleteAccountDialog(
+        accountName: widget.account.name,
+        accountBalance: widget.account.balance,
+        accountCurrency: widget.account.currency,
+        otherAccounts: otherAccounts,
       ),
     );
 
-    if (confirmed != true) return;
+    if (result == null || result['confirmed'] != true) return;
 
     try {
-      await context.read<AccountViewModel>().deleteAccount(widget.account.id);
+      final transferEnabled = result['transferEnabled'] as bool;
+      final targetAccountId = result['targetAccountId'] as String?;
       
-      if (mounted) {
+      bool success;
+      
+      if (transferEnabled && targetAccountId != null) {
+        // Transferir saldo y eliminar
+        success = await accountViewModel.transferBalanceAndDelete(
+          fromAccountId: widget.account.id,
+          toAccountId: targetAccountId,
+        );
+      } else {
+        // Solo eliminar
+        success = await accountViewModel.deleteAccount(widget.account.id);
+      }
+      
+      if (success && mounted) {
         Navigator.pop(context, true); // Retornar true para indicar que se eliminó
         
         ScaffoldMessenger.of(context).showSnackBar(
@@ -709,5 +721,277 @@ class _AccountDetailViewState extends State<AccountDetailView> {
     } catch (e) {
       return 'N/A';
     }
+  }
+}
+
+/// Diálogo para eliminar cuenta con opción de transferir saldo
+class _DeleteAccountDialog extends StatefulWidget {
+  final String accountName;
+  final double accountBalance;
+  final String accountCurrency;
+  final List<AccountModel> otherAccounts;
+
+  const _DeleteAccountDialog({
+    required this.accountName,
+    required this.accountBalance,
+    required this.accountCurrency,
+    required this.otherAccounts,
+  });
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  bool _transferEnabled = false;
+  String? _selectedAccountId;
+
+  @override
+  void initState() {
+    super.initState();
+    // Si hay otras cuentas y el saldo no es cero, habilitar la opción de transferencia
+    if (widget.otherAccounts.isNotEmpty && widget.accountBalance != 0) {
+      _transferEnabled = false; // Por defecto deshabilitado
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currencyService = CurrencyConversionService();
+    
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Eliminar cuenta',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const Divider(height: 1),
+            
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Mensaje de advertencia
+                  Text(
+                    'Al eliminar esta cuenta, se eliminarán permanentemente todas las transacciones y datos asociados. Esta acción no se puede deshacer.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      height: 1.5,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Alerta de saldo si tiene balance
+                  if (widget.accountBalance != 0) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Color(0xFFF59E0B),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Esta cuenta tiene un saldo de ${currencyService.formatAmount(amount: widget.accountBalance, currency: widget.accountCurrency)}. Transfiere el saldo antes de eliminarla.',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF92400E),
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // Opción de transferir saldo
+                  if (widget.otherAccounts.isNotEmpty && widget.accountBalance != 0) ...[
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _transferEnabled,
+                          onChanged: (value) {
+                            setState(() {
+                              _transferEnabled = value ?? false;
+                              if (!_transferEnabled) {
+                                _selectedAccountId = null;
+                              }
+                            });
+                          },
+                          activeColor: const Color(0xFF984CE6),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _transferEnabled = !_transferEnabled;
+                                if (!_transferEnabled) {
+                                  _selectedAccountId = null;
+                                }
+                              });
+                            },
+                            child: const Text(
+                              'Transferir saldo',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Dropdown de cuentas
+                    if (_transferEnabled) ...[
+                      const Text(
+                        'Transferir a',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedAccountId,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF5EEFD),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF984CE6),
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          hintText: 'Selecciona una cuenta',
+                        ),
+                        items: widget.otherAccounts.map((account) {
+                          return DropdownMenuItem<String>(
+                            value: account.id,
+                            child: Text(
+                              '${account.name} (...${account.id.substring(account.id.length - 4)})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedAccountId = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+            
+            const Divider(height: 1),
+            
+            // Botón eliminar
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Validar que si está habilitada la transferencia, se haya seleccionado una cuenta
+                    if (_transferEnabled && _selectedAccountId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Selecciona una cuenta para transferir el saldo'),
+                          backgroundColor: Color(0xFFEF4444),
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    Navigator.pop(context, {
+                      'confirmed': true,
+                      'transferEnabled': _transferEnabled,
+                      'targetAccountId': _selectedAccountId,
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Eliminar cuenta',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

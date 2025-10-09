@@ -172,6 +172,46 @@ class SupabaseAccountRepository implements AccountRepository {
     }
   }
   
+  @override
+  Future<void> transferBalance({
+    required String fromAccountId,
+    required String toAccountId,
+  }) async {
+    try {
+      final userId = _currentUserId;
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+      
+      // Obtener ambas cuentas
+      final fromAccount = await getAccountById(fromAccountId);
+      final toAccount = await getAccountById(toAccountId);
+      
+      if (fromAccount == null) {
+        throw Exception('Cuenta origen no encontrada');
+      }
+      
+      if (toAccount == null) {
+        throw Exception('Cuenta destino no encontrada');
+      }
+      
+      // Calcular nuevo balance de la cuenta destino
+      final newBalance = toAccount.balance + fromAccount.balance;
+      
+      // Actualizar el balance de la cuenta destino
+      await _supabase
+          .from('accounts')
+          .update({'balance': newBalance})
+          .eq('id', toAccountId)
+          .eq('user_id', userId);
+      
+      // Nota: La cuenta origen se elimina después por el método deleteAccount
+      
+    } catch (e) {
+      throw Exception('Error al transferir saldo: $e');
+    }
+  }
+  
   /// Método privado para desmarcar otras cuentas como predeterminadas
   Future<void> _unsetOtherDefaultAccounts(
     String userId, {

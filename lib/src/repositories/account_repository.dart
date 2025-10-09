@@ -29,4 +29,12 @@ abstract class AccountRepository {
   
   /// Obtiene una cuenta específica por su ID
   Future<AccountModel?> getAccountById(String accountId);
+  
+  /// Transfiere el saldo de una cuenta a otra
+  /// Suma el balance de fromAccountId al balance de toAccountId
+  /// Esta operación debe ser atómica para evitar inconsistencias
+  Future<void> transferBalance({
+    required String fromAccountId,
+    required String toAccountId,
+  });
 }
