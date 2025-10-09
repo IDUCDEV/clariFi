@@ -1,48 +1,41 @@
 import 'package:flutter/material.dart';
-import '../home/home_view.dart';
-import '../budgets/budgets_view.dart';
-import '../transactions/transactions_view.dart';
-import '../reports/reports_view.dart';
-import '../settings/settings_view.dart';
+import 'package:go_router/go_router.dart';
 
 /// Vista principal con NavigationBar para navegar entre las secciones principales
-class MainNavigationView extends StatefulWidget {
-  const MainNavigationView({super.key});
-
-  @override
-  State<MainNavigationView> createState() => _MainNavigationViewState();
-}
-
-class _MainNavigationViewState extends State<MainNavigationView> {
-  int _currentPageIndex = 0;
+/// Ahora usa navegación declarativa con go_router
+class MainNavigationView extends StatelessWidget {
+  final Widget child;
+  
+  const MainNavigationView({
+    super.key,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: <Widget>[
-        /// Página de Inicio
-        const HomeView(),
-        
-        /// Página de Presupuestos
-        const BudgetsView(),
-        
-        /// Página de Transacciones
-        const TransactionsView(),
-        
-        /// Página de Reportes
-        const ReportsView(),
-        
-        /// Página de Ajustes
-        const SettingsView(),
-      ][_currentPageIndex],
-      
+      body: child,
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
-          setState(() {
-            _currentPageIndex = index;
-          });
+          switch (index) {
+            case 0:
+              context.go('/home');
+              break;
+            case 1:
+              context.go('/budgets');
+              break;
+            case 2:
+              context.go('/transactions');
+              break;
+            case 3:
+              context.go('/reports');
+              break;
+            case 4:
+              context.go('/settings');
+              break;
+          }
         },
-        selectedIndex: _currentPageIndex,
+        selectedIndex: _calculateSelectedIndex(context),
         destinations: const <NavigationDestination>[
           NavigationDestination(
             selectedIcon: Icon(Icons.home),
@@ -72,5 +65,28 @@ class _MainNavigationViewState extends State<MainNavigationView> {
         ],
       ),
     );
+  }
+
+  /// Calcula el índice seleccionado basado en la ruta actual
+  static int _calculateSelectedIndex(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.path;
+    
+    if (location.startsWith('/home')) {
+      return 0;
+    }
+    if (location.startsWith('/budgets')) {
+      return 1;
+    }
+    if (location.startsWith('/transactions')) {
+      return 2;
+    }
+    if (location.startsWith('/reports')) {
+      return 3;
+    }
+    if (location.startsWith('/settings') || location.startsWith('/accounts')) {
+      return 4; // Settings o rutas relacionadas como accounts
+    }
+    
+    return 0; // Default a Inicio
   }
 }

@@ -103,12 +103,6 @@ class _AccountsListViewState extends State<AccountsListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Cuentas'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: Consumer<AccountViewModel>(
         builder: (context, viewModel, child) {
           // Estado de carga
@@ -128,17 +122,29 @@ class _AccountsListViewState extends State<AccountsListView> {
             return _buildEmptyState();
           }
 
-          // Lista de cuentas
-          return RefreshIndicator(
-            onRefresh: _handleRefresh,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: viewModel.accounts.length,
-              itemBuilder: (context, index) {
-                final account = viewModel.accounts[index];
-                return _buildAccountCard(account);
-              },
-            ),
+          // Lista de cuentas con AppBar personalizado en el body
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                title: const Text('Mis Cuentas'),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                floating: true,
+                snap: true,
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final account = viewModel.accounts[index];
+                      return _buildAccountCard(account);
+                    },
+                    childCount: viewModel.accounts.length,
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
