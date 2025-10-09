@@ -27,7 +27,7 @@ class _HomeViewState extends State<HomeView> {
     final authViewModel = Provider.of<AuthViewModel>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Inicio'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -37,8 +37,31 @@ class _HomeViewState extends State<HomeView> {
           )
         ],
       ),
-      body: const Center(
-        child: Text('Home View'),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 80,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Bienvenido a clariFi',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tu gestor de finanzas personales',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateAccountModal(context),

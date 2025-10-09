@@ -10,6 +10,7 @@ import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
 import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
+import 'package:clarifi_app/src/views/navigation/main_navigation_view.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -55,12 +56,12 @@ class AppRouter {
         GoRoute(
           name: 'dashboard',
           path: '/dashboard',
-          builder: (context, state) => const HomeView(),
+          builder: (context, state) => const MainNavigationView(),
         ),
         GoRoute(
           name: 'home',
           path: '/home',
-          builder: (context, state) => const HomeView(),
+          builder: (context, state) => const MainNavigationView(),
         ),
         GoRoute(
           name: 'accounts',
