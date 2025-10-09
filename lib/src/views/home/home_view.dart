@@ -26,8 +26,9 @@ class HomeView extends StatelessWidget {
         child: Text('Home View'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/transactions/new'),
+        onPressed:() => context.goNamed('financial_summary'),
         child: const Icon(Icons.add),
+
       ),
     );
   }

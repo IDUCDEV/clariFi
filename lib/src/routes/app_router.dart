@@ -7,6 +7,7 @@ import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
+import 'package:clarifi_app/src/views/visualization_reports/financial_summary.dart';
 import 'package:go_router/go_router.dart';
 
 
@@ -19,6 +20,7 @@ class AppRouter {
       refreshListenable: authViewModel,
       initialLocation: '/',
       routes: [
+        
         GoRoute(
           name: 'splashScreen',
           path: '/',
@@ -54,6 +56,12 @@ class AppRouter {
           path: '/dashboard',
           builder: (context, state) => const HomeView(),
         ),
+
+        GoRoute(
+          name: 'financial_summary',
+          path: '/financial',
+          builder: (context, state) => const FinancialSummaryScreen(),
+        )
       ],
       redirect: (context, state) {
         final bool loggedIn = authViewModel.isAuthenticated;

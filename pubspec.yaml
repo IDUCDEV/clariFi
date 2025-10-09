@@ -28,29 +28,17 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  app_links: ^6.3.0
+  cupertino_icons: ^1.0.8
+  fl_chart: ^1.1.1
   flutter:
     sdk: flutter
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-
-  # State management
-  provider: ^6.1.5+1
-
-  # Routing
-  go_router: ^16.2.4
-
-  # Supabase
-  supabase_flutter: ^2.10.2
   flutter_dotenv: ^6.0.0
-
-  # Deep linking
-  app_links: ^6.3.0
+  go_router: ^16.2.4
+  provider: ^6.1.5+1
+  supabase_flutter: ^2.10.2
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -58,10 +46,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -78,13 +67,10 @@ flutter:
     - lib/assets/onboarding-page-2.png
     - lib/assets/onboarding-page-3.png
     - lib/assets/Overlay.png
-
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
-
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
-
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a
