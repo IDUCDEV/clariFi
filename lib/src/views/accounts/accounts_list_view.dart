@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:clarifi_app/src/views/accounts/create_account_view.dart';
+import 'package:clarifi_app/src/views/accounts/account_detail_view.dart';
+import 'package:clarifi_app/src/constants/app_constants.dart';
+import 'package:clarifi_app/src/services/currency_conversion_service.dart';
 
 /// Vista que muestra la lista de cuentas del usuario con diseño moderno
 /// Incluye saldo total consolidado y lista de cuentas individuales
@@ -14,20 +17,56 @@ class AccountsListView extends StatefulWidget {
 }
 
 class _AccountsListViewState extends State<AccountsListView> {
+  final _currencyService = CurrencyConversionService();
+  bool _isUpdatingRates = false;
+
   @override
   void initState() {
     super.initState();
     // Cargar cuentas al iniciar la vista
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AccountViewModel>().loadAccounts();
+      _updateExchangeRates();
     });
   }
 
-  /// Muestra el modal para crear una nueva cuenta
+  /// Actualiza las tasas de cambio en segundo plano
+  Future<void> _updateExchangeRates() async {
+    if (_isUpdatingRates) return;
+    
+    setState(() => _isUpdatingRates = true);
+    
+    try {
+      await _currencyService.updateExchangeRates();
+      if (mounted) {
+        setState(() {}); // Actualizar UI con nuevas tasas
+      }
+    } catch (e) {
+      print('⚠️ No se pudieron actualizar las tasas de cambio: $e');
+      // Continuar con tasas offline
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingRates = false);
+      }
+    }
+  }
+
+  /// Maneja el pull-to-refresh para recargar cuentas y tasas
+  Future<void> _handleRefresh() async {
+    // Ejecutar ambas actualizaciones en paralelo
+    await Future.wait([
+      context.read<AccountViewModel>().loadAccounts(),
+      _updateExchangeRates(),
+    ]);
+  }
+
+  /// Muestra la vista para crear una nueva cuenta en pantalla completa
   void _showCreateAccountModal() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => const CreateAccountView(),
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => const CreateAccountView(),
+        fullscreenDialog: true, // Animación de pantalla completa desde abajo
+      ),
     );
 
     // Si se creó exitosamente, recargar la lista
@@ -36,9 +75,26 @@ class _AccountsListViewState extends State<AccountsListView> {
     }
   }
 
-  /// Calcula el saldo total consolidado
+  /// Calcula el saldo total consolidado en USD usando conversión de monedas
+  /// Convierte automáticamente todas las cuentas a la moneda principal
   double _calculateTotalBalance(List<AccountModel> accounts) {
-    return accounts.fold(0.0, (sum, account) => sum + account.balance);
+    if (accounts.isEmpty) return 0.0;
+    
+    // Agrupar saldos por moneda
+    final balancesByCurrency = <String, double>{};
+    
+    for (final account in accounts) {
+      balancesByCurrency[account.currency] = 
+          (balancesByCurrency[account.currency] ?? 0.0) + account.balance;
+    }
+    
+    // Consolidar todas las monedas a USD
+    final totalInUSD = _currencyService.consolidate(
+      amounts: balancesByCurrency,
+      targetCurrency: CurrencyConversionService.baseCurrency,
+    );
+    
+    return totalInUSD;
   }
 
   @override
@@ -74,36 +130,42 @@ class _AccountsListViewState extends State<AccountsListView> {
                     return _buildEmptyState();
                   }
 
-                  // Lista de cuentas
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        
-                        // Card de saldo total
-                        _buildTotalBalanceCard(viewModel.accounts),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Título "Todas las cuentas"
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Text(
-                            'Todas las cuentas',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                  // Lista de cuentas con pull-to-refresh
+                  return RefreshIndicator(
+                    onRefresh: _handleRefresh,
+                    color: const Color(0xFF7C3AED),
+                    backgroundColor: Colors.white,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(), // Permite refresh incluso con poco contenido
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          
+                          // Card de saldo total
+                          _buildTotalBalanceCard(viewModel.accounts),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Título "Todas las cuentas"
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              'Todas las cuentas',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
-                        ),
-                        
-                        const SizedBox(height: 16),
-                        
-                        // Lista de cuentas
-                        ...viewModel.accounts.map((account) => _buildAccountItem(account)),
-                      ],
+                          
+                          const SizedBox(height: 16),
+                          
+                          // Lista de cuentas
+                          ...viewModel.accounts.map((account) => _buildAccountItem(account)),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -114,7 +176,9 @@ class _AccountsListViewState extends State<AccountsListView> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateAccountModal,
-        backgroundColor: const Color(0xFF7C3AED),
+        backgroundColor: const Color(0xFF984CE6),
+        shape: const CircleBorder(), // Asegura que sea completamente redondo
+        elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
@@ -128,13 +192,43 @@ class _AccountsListViewState extends State<AccountsListView> {
         alignment: Alignment.center,
         children: [
           // Título centrado
-          const Text(
-            'Cuentas',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
+          Column(
+            children: [
+              const Text(
+                'Cuentas',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              // Indicador de actualización de tasas
+              if (_isUpdatingRates)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF7C3AED),
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Actualizando tasas...',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF7C3AED),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           // Botón cerrar alineado a la izquierda
           Align(
@@ -210,8 +304,18 @@ class _AccountsListViewState extends State<AccountsListView> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            // TODO: Navegar a detalles de cuenta
+          onTap: () async {
+            // Navegar a vista de detalles de cuenta
+            final result = await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => AccountDetailView(account: account),
+              ),
+            );
+            
+            // Si se eliminó la cuenta, recargar la lista
+            if (result == true && mounted) {
+              await context.read<AccountViewModel>().loadAccounts();
+            }
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -227,28 +331,14 @@ class _AccountsListViewState extends State<AccountsListView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              account.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (account.isDefault == true) ...[
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.star,
-                              size: 16,
-                              color: Color(0xFFFBBF24),
-                            ),
-                          ],
-                        ],
+                      Text(
+                        account.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -263,6 +353,16 @@ class _AccountsListViewState extends State<AccountsListView> {
                 ),
                 
                 const SizedBox(width: 12),
+                
+                // Estrella de cuenta predeterminada (a la izquierda del saldo)
+                if (account.isDefault == true) ...[
+                  const Icon(
+                    Icons.star,
+                    size: 18,
+                    color: Color(0xFFFBBF24),
+                  ),
+                  const SizedBox(width: 20),
+                ],
                 
                 // Saldo
                 Column(
@@ -279,13 +379,36 @@ class _AccountsListViewState extends State<AccountsListView> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      account.currency,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                    // Mostrar moneda y equivalente en USD si no es USD
+                    if (account.currency != 'USD')
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            account.currency,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            '≈ USD \$${_formatBalance(_currencyService.convert(amount: account.balance, fromCurrency: account.currency))}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        account.currency,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -298,49 +421,24 @@ class _AccountsListViewState extends State<AccountsListView> {
 
   /// Construye el icono según el tipo de cuenta
   Widget _buildAccountIcon(String type) {
-    IconData icon;
-    Color color;
-
-    switch (type.toLowerCase()) {
-      case 'efectivo':
-      case 'cash':
-        icon = Icons.payments_outlined;
-        color = const Color(0xFF10B981);
-        break;
-      case 'corriente':
-      case 'checking':
-        icon = Icons.account_balance_outlined;
-        color = const Color(0xFF7C3AED);
-        break;
-      case 'ahorros':
-      case 'savings':
-        icon = Icons.savings_outlined;
-        color = const Color(0xFF06B6D4);
-        break;
-      case 'tarjeta de crédito':
-      case 'credit':
-      case 'crédito':
-        icon = Icons.credit_card;
-        color = const Color(0xFFF59E0B);
-        break;
-      case 'inversión':
-      case 'investment':
-        icon = Icons.trending_up;
-        color = const Color(0xFFEC4899);
-        break;
-      default:
-        icon = Icons.account_balance_wallet_outlined;
-        color = const Color(0xFF6B7280);
-    }
+    // Buscar el tipo de cuenta en AppConstants
+    final accountTypeOption = AppConstants.accountTypes.firstWhere(
+      (option) => option.value == type,
+      orElse: () => AppConstants.accountTypes.last, // Usar 'other' por defecto
+    );
 
     return Container(
       width: 48,
       height: 48,
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5EEFD), // Fondo morado claro
+        shape: BoxShape.circle, // Hace el contenedor completamente redondo
       ),
-      child: Icon(icon, color: color, size: 24),
+      child: Icon(
+        accountTypeOption.icon,
+        color: const Color(0xFF984CE6), // Morado
+        size: 24,
+      ),
     );
   }
 
@@ -429,9 +527,7 @@ class _AccountsListViewState extends State<AccountsListView> {
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: () {
-                context.read<AccountViewModel>().loadAccounts();
-              },
+              onPressed: _handleRefresh,
               icon: const Icon(Icons.refresh),
               label: const Text('Reintentar'),
               style: ElevatedButton.styleFrom(
@@ -449,23 +545,19 @@ class _AccountsListViewState extends State<AccountsListView> {
     );
   }
 
-  /// Formatea el tipo de cuenta para mostrar
+  /// Formatea el tipo de cuenta para mostrar el label legible
   String _formatAccountType(String type) {
-    final Map<String, String> typeNames = {
-      'efectivo': 'Efectivo',
-      'cash': 'Efectivo',
-      'corriente': 'Corriente',
-      'checking': 'Corriente',
-      'ahorros': 'Ahorros',
-      'savings': 'Ahorros',
-      'tarjeta de crédito': 'Crédito',
-      'credit': 'Crédito',
-      'crédito': 'Crédito',
-      'inversión': 'Inversión',
-      'investment': 'Inversión',
-    };
-    
-    return typeNames[type.toLowerCase()] ?? type;
+    // Buscar el tipo en AppConstants para obtener el label
+    try {
+      final accountTypeOption = AppConstants.accountTypes.firstWhere(
+        (option) => option.value == type,
+        orElse: () => AppConstants.accountTypes.last, // Usar 'other' por defecto
+      );
+      return accountTypeOption.label;
+    } catch (e) {
+      // Si no se encuentra, retornar el tipo capitalizado
+      return type.substring(0, 1).toUpperCase() + type.substring(1);
+    }
   }
 
   /// Formatea el balance con separadores de miles

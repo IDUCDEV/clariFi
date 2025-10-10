@@ -129,6 +129,37 @@ class AccountViewModel extends ChangeNotifier {
     }
   }
   
+  /// Transfiere el saldo de una cuenta a otra y luego elimina la cuenta origen
+  /// Retorna true si se completó exitosamente, false en caso contrario
+  Future<bool> transferBalanceAndDelete({
+    required String fromAccountId,
+    required String toAccountId,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    
+    try {
+      // Primero transferir el saldo
+      await _repository.transferBalance(
+        fromAccountId: fromAccountId,
+        toAccountId: toAccountId,
+      );
+      
+      // Luego eliminar la cuenta
+      await _repository.deleteAccount(fromAccountId);
+      
+      // Recargar la lista de cuentas
+      await loadAccounts();
+      
+      return true;
+      
+    } catch (e) {
+      _setError('Error al transferir saldo y eliminar cuenta: $e');
+      _setLoading(false);
+      return false;
+    }
+  }
+  
   /// Obtiene una cuenta específica por ID
   Future<AccountModel?> getAccountById(String accountId) async {
     try {
