@@ -6,6 +6,7 @@ class AppColors {
   static const Color primaryVariant = Color(0xFF3700B3);
   static const Color secondary = Color(0xFF03DAC6);
   static const Color success = Color.fromARGB(255, 0, 255, 106);
+  static const Color lightPurple = Color(0xFFF2E9FF);
 
   // Colores de fondo
   static const Color background = Color(0xFFFFFFFF);
@@ -16,6 +17,7 @@ class AppColors {
   static const Color onSecondary = Color(0xFF000000);
   static const Color onBackground = Color(0xFF000000);
   static const Color onSurface = Color(0xFF000000);
+  static const Color gray = Color(0xFF8E8E93);
 
   // Colores de error
   static const Color error = Color(0xFFB00020);
