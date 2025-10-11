@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  final SupabaseClient supabase = Supabase.instance.client;
-  SupabaseService();
+  final SupabaseClient supabase;
+  SupabaseService(this.supabase);
   /*
     authentication methods
   */

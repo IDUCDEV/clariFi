@@ -48,6 +48,8 @@ dependencies:
   # Deep linking
   app_links: ^6.3.0
 
+  # HTTP client for currency conversion
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
