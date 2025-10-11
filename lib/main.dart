@@ -1,10 +1,12 @@
+import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
 import 'package:clarifi_app/src/routes/app_router.dart';
 import 'package:clarifi_app/src/services/supabase_service.dart';
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
+import 'package:clarifi_app/src/viewmodels/budget_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/home_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
-import 'package:clarifi_app/src/repositories/supabase_account_repository.dart';
+import 'package:clarifi_app/src/repositories/account/supabase_account_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -115,6 +117,9 @@ class _MyAppState extends State<MyApp> {
             SupabaseAccountRepository(Supabase.instance.client),
           ),
         ),
+        ChangeNotifierProvider(create: (context)=> BudgetViewModel(
+          SupabaseBudgetRepository(Supabase.instance.client),
+        )),
       ],
       child: Builder(
         builder: (context) {
