@@ -28,6 +28,8 @@ class AccountModel {
       type: json['type'],
       currency: json['currency'],
       balance: (json['balance'] as num).toDouble(),
+      isDefault: json['is_default'],
+      createdAt: json['created_at'],
     );
   }
 
@@ -39,6 +41,8 @@ class AccountModel {
       'type': type,
       'currency': currency,
       'balance': balance,
+      'is_default': isDefault,
+      'created_at': createdAt,
     };
   }
 }

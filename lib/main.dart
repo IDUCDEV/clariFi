@@ -3,6 +3,8 @@ import 'package:clarifi_app/src/services/supabase_service.dart';
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/home_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
+import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
+import 'package:clarifi_app/src/repositories/supabase_account_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -106,6 +108,12 @@ class _MyAppState extends State<MyApp> {
         // TransactionViewModel depends on SupabaseService
         ChangeNotifierProvider<TransactionViewModel>(
           create: (context) => TransactionViewModel(context.read<SupabaseService>()),
+        ),
+        // AccountViewModel depends on SupabaseAccountRepository
+        ChangeNotifierProvider<AccountViewModel>(
+          create: (context) => AccountViewModel(
+            SupabaseAccountRepository(Supabase.instance.client),
+          ),
         ),
       ],
       child: Builder(
