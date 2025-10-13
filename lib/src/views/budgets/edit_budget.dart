@@ -38,7 +38,7 @@ class _EditBudgetState extends State<EditBudget> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _thresholdController = TextEditingController();
   final TextEditingController _categoryBudgetController = TextEditingController();
-  int? _selectedThreshold;
+  double? _selectedThreshold;
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedPeriodo = '';
@@ -94,7 +94,7 @@ class _EditBudgetState extends State<EditBudget> {
     _endDate = widget.endDate;
     _categoryBudgetController.text = widget.category;
     _selectedPeriodo = widget.periodo;
-    _selectedThreshold = widget.threshold.isNotEmpty ? int.tryParse(widget.threshold) : null;
+    _selectedThreshold = widget.threshold.isNotEmpty ? double.tryParse(widget.threshold) : null;
   }
 
 

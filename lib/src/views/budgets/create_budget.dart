@@ -1,8 +1,10 @@
 import 'package:clarifi_app/src/colors/colors.dart';
+import 'package:clarifi_app/src/viewmodels/budget_viewmodel.dart';
 import 'package:clarifi_app/src/widgets/AlertThresholds.dart';
 import 'package:clarifi_app/src/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class CreateBudget extends StatefulWidget {
   const CreateBudget({super.key});
@@ -16,10 +18,10 @@ class _CreateBudgetState extends State<CreateBudget> {
   final _nameBudgetController = TextEditingController();
   final _categoryBudgetController = TextEditingController();
   final _amountController = TextEditingController();
-  String _selectedPeriod = 'Mensual';
+  String _selectedPeriod = 'monthly';
   DateTime? startDate;
   DateTime? endDate;
-  int? _selectedThreshold = 50;
+  double? _selectedThreshold = 50;
 
   
 
@@ -75,6 +77,8 @@ class _CreateBudgetState extends State<CreateBudget> {
 
   @override
   Widget build(BuildContext context) {
+    final budgetViewModel = Provider.of<BudgetViewModel>(context);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -120,7 +124,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                     const SizedBox(height: 16.0),
                     DropdownButtonFormField<String>(
                       initialValue: _categoryBudgetController.text.isEmpty ? null : _categoryBudgetController.text,
-                      hint: const Text('Categoría'),
+                      hint: const Text('Tipo de Categoría'),
                       isExpanded: true,
                       dropdownColor: AppColors.blush,
                       icon: const Icon(Icons.arrow_drop_down),
@@ -139,7 +143,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                           _categoryBudgetController.text = newValue!;
                         });
                       },
-                      items: <String>['Opción 1', 'Opción 2', 'Opción 3'].map<DropdownMenuItem<String>>((String value) {
+                      items: <String>['expense', 'income', 'transfer'].map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -147,7 +151,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                       }).toList(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor selecciona una categoría';
+                          return 'Por favor selecciona un tipo de categoría';
                         }
                         return null;
                       },
@@ -189,15 +193,15 @@ class _CreateBudgetState extends State<CreateBudget> {
                 child: SegmentedButton<String>(
                 segments: const <ButtonSegment<String>>[
                   ButtonSegment(
-                    value: 'Mensual',
+                    value: 'monthly',
                     label: Text('Mensual'),
                   ),
                   ButtonSegment(
-                    value: 'Semanal',
+                    value: 'weekly',
                     label: Text('Semanal'),
                   ),
                   ButtonSegment(
-                    value: 'Anual',
+                    value: 'yearly',
                     label: Text('Anual'),
                   ),
                 ],
@@ -267,12 +271,34 @@ class _CreateBudgetState extends State<CreateBudget> {
               PrimaryButton(
                 text: 'Guardar Presupuesto',
                 onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    // Lógica para guardar el presupuesto
-                    // Simular delay
-                    await Future.delayed(const Duration(seconds: 2));
+                  if (_formKey.currentState!.validate() && startDate != null && endDate != null) {
+                    try {
+                      await budgetViewModel.createBudget(
+                        name: _nameBudgetController.text,
+                        amount: double.parse(_amountController.text),
+                        period: _selectedPeriod,
+                        categoryId: _categoryBudgetController.text,
+                        startDate: startDate!.toUtc(),
+                        endDate: endDate!.toUtc(),
+                        alertThreshold: _selectedThreshold,
+                      );
+
+                      if(mounted){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Presupuesto guardado exitosamente')),
+                        );
+                        GoRouter.of(context).go('/budgets');
+                      }
+                    } catch (e) {
+                      if(mounted){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al guardar presupuesto: $e')),
+                        );
+                      }
+                    }
+                  } else if (startDate == null || endDate == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Presupuesto guardado')),
+                      const SnackBar(content: Text('Por favor selecciona las fechas de inicio y fin')),
                     );
                   }
                 },

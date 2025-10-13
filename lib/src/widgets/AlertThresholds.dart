@@ -2,8 +2,8 @@ import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:flutter/material.dart';
 
 class AlertThresholds extends StatefulWidget {
-  final int? selectedThreshold;
-  final ValueChanged<int>? onThresholdChanged;
+  final double? selectedThreshold;
+  final ValueChanged<double?>? onThresholdChanged;
   final bool disabled;
   final double spacing;
   final TextStyle? textStyle;
@@ -27,13 +27,13 @@ class AlertThresholds extends StatefulWidget {
 
 class _AlertThresholdsState extends State<AlertThresholds> {
   final List<Map<String, dynamic>> _thresholds = [
-    {'value': 50, 'text': 'Avisame al 50%'},
-    {'value': 80, 'text': 'Avisame al 80%'},
-    {'value': 90, 'text': 'Avisme al 90%'},
-    {'value': 100, 'text': 'Avisame al 100%'},
+    {'value': 50.0, 'text': 'Avisame al 50%'},
+    {'value': 80.0, 'text': 'Avisame al 80%'},
+    {'value': 90.0, 'text': 'Avisme al 90%'},
+    {'value': 100.0, 'text': 'Avisame al 100%'},
   ];
 
-  void _handleSelection(int value) {
+  void _handleSelection(double value) {
     if (widget.disabled) return;
     widget.onThresholdChanged?.call(value);
   }
@@ -56,7 +56,7 @@ class _AlertThresholdsState extends State<AlertThresholds> {
               text: threshold['text'] as String,
               isSelected: isSelected,
               disabled: widget.disabled,
-              onTap: () => _handleSelection(threshold['value'] as int),
+              onTap: () => _handleSelection(threshold['value'] as double),
               textStyle: widget.textStyle,
               selectedColor: widget.selectedColor,
               normalColor: widget.normalColor,

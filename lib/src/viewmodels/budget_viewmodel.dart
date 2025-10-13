@@ -1,4 +1,5 @@
 
+import 'package:clarifi_app/src/models/budget.dart';
 import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -16,5 +17,61 @@ class BudgetViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
+  //lista de presupuestos
+  List<BudgetModel> _budgets = [];
+  List<BudgetModel> get budgets => _budgets;
+
+
   // Métodos para cargar datos
+
+  Future<void> loadBudgets() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Aquí iría la llamada al repositorio para obtener los presupuestos
+      // Ejemplo:
+      // _budgets = await _repository.fetchBudgets();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // registrar presupuesto
+  Future<void> createBudget({
+    required String name,
+    required double amount,
+    required String period,
+    required String categoryId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double? alertThreshold,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+      try {
+        // Aquí iría la llamada al repositorio para registrar el presupuesto
+        // Ejemplo:
+        await _repository.createBudget(
+          name,
+          amount,
+          period,
+          categoryId,
+          startDate,
+          endDate,
+          alertThreshold,
+        );      
+      } catch (e) {
+        _error = e.toString();
+      } finally {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
 }

@@ -1,25 +1,25 @@
 
 // Based on the 'budgets' table
 class BudgetModel {
-  final String id;
-  final String name;
-  final double amount;
-  final String period;
-  final String userId;
+  final String? id;
+  final String? name;
+  final double? amount;
+  final String? period;
+  final String? userId;
   final String? categoryId;
-  final DateTime startDate;
+  final DateTime? startDate;
   final DateTime? endDate;
   final double? alertThreshold;
   final DateTime? createdAt;
 
   BudgetModel({
-    required this.id,
-    required this.name,
-    required this.amount,
-    required this.period,
-    required this.userId,
+    this.id,
+    this.name,
+    this.amount,
+    this.period,
+    this.userId,
     this.categoryId,
-    required this.startDate,
+    this.startDate,
     this.endDate,
     this.alertThreshold,
     this.createdAt,
@@ -48,7 +48,7 @@ class BudgetModel {
       'period': period,
       'user_id': userId,
       'category_id': categoryId,
-      'start_date': startDate.toIso8601String(),
+      'start_date': startDate?.toIso8601String(),
       'end_date': endDate?.toIso8601String(),
       'alert_threshold': alertThreshold,
       'created_at': createdAt?.toIso8601String(),
