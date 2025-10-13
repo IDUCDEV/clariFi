@@ -27,16 +27,16 @@ class BudgetModel {
 
   factory BudgetModel.fromJson(Map<String, dynamic> json) {
     return BudgetModel(
-      id: json['id'],
-      name: json['name'],
-      amount: (json['amount'] as num).toDouble(),
-      period: json['period'],
-      userId: json['user_id'],
-      categoryId: json['category_id'],
-      startDate: DateTime.parse(json['start_date']),
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date']) : null,
+      id: json['id'] != null ? json['id'] as String : null,
+      name: json['name'] != null ? json['name'] as String : null,
+      amount: json['amount'] != null ? (json['amount'] as num).toDouble() : null,
+      period: json['period'] != null ? json['period'] as String : null,
+      userId: json['user_id'] != null ? json['user_id'] as String : null,
+      categoryId: json['category_id'] != null ? json['category_id'] as String : null,
+      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
+      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
       alertThreshold: json['alert_threshold'] != null ? (json['alert_threshold'] as num).toDouble() : null,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
     );
   }
 
@@ -48,10 +48,10 @@ class BudgetModel {
       'period': period,
       'user_id': userId,
       'category_id': categoryId,
-      'start_date': startDate?.toIso8601String(),
-      'end_date': endDate?.toIso8601String(),
+      'start_date': startDate?.toIso8601String().split('T').first,
+      'end_date': endDate?.toIso8601String().split('T').first,
       'alert_threshold': alertThreshold,
-      'created_at': createdAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String().split('T').first,
     };
   }
 }

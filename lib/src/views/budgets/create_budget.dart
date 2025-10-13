@@ -143,7 +143,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                           _categoryBudgetController.text = newValue!;
                         });
                       },
-                      items: <String>['expense', 'income', 'transfer'].map<DropdownMenuItem<String>>((String value) {
+                      items: <String>['Presupuesto global', 'Gasto', 'Ingreso'].map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -174,7 +174,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                         }
                         final amount = double.tryParse(value);
                         if (amount == null || amount <= 0) {
-                          return 'Ingresa una cantidad válida';
+                          return 'Ingresa una cantidad válida, y mayor que 0';
                         }
                         return null;
                       },
@@ -285,7 +285,11 @@ class _CreateBudgetState extends State<CreateBudget> {
 
                       if(mounted){
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Presupuesto guardado exitosamente')),
+                          const SnackBar(
+                            backgroundColor: AppColors.success,
+                            content: Text('Presupuesto guardado exitosamente',
+                                style: TextStyle(color: Colors.black)),
+                          ),
                         );
                         GoRouter.of(context).go('/budgets');
                       }

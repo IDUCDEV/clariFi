@@ -1,3 +1,4 @@
+import 'package:clarifi_app/src/models/budget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseBudgetRepository {
@@ -13,7 +14,7 @@ class SupabaseBudgetRepository {
     String name,
     double amount,
     String period,
-    String categoryId,
+    String? categoryId,
     DateTime startDate,
     DateTime endDate,
     double? alertThreshold,
@@ -25,20 +26,51 @@ class SupabaseBudgetRepository {
     }
 
     try {
-      await _supabaseClient.from('budgets').insert({
-        'user_id': userId,
-        'name': name,
-        'amount': amount,
-        'period': period,
-        'category_id': null, // Por ahora null hasta que se implemente selección de categoría real
-        'start_date': startDate.toIso8601String().split('T').first,
-        'end_date': endDate.toIso8601String().split('T').first,
-        'alert_threshold': alertThreshold,
-      });
+      final budget = BudgetModel(
+        name: name,
+        amount: amount,
+        period: period,
+        userId: userId,
+        categoryId: null, // Siempre null por ahora hasta implementar selección de categoría
+        startDate: startDate,
+        endDate: endDate,
+        alertThreshold: alertThreshold,
+      );
+
+      final data = budget.toJson();
+      // Excluir campos generados por la DB
+      data.remove('id');
+      data.remove('created_at');
+
+      await _supabaseClient.from('budgets').insert(data);
     } on PostgrestException catch (e) {
       throw Exception('Error creando presupuesto: ${e.message}');
     } catch (e) {
       throw Exception('Error creando presupuesto: $e');
     }
   }
+
+
+    Future<List<BudgetModel>> getBudgets() async {
+      final userId = _currentUserId;
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      try {
+        final response = await _supabaseClient
+            .from('budgets')
+            .select()
+            .eq('user_id', userId)
+            .order('created_at', ascending: false);
+
+        return response.map((json) => BudgetModel.fromJson(json)).toList();
+      } on PostgrestException catch (e) {
+        throw Exception('Error al obtener presupuestos: ${e.message}');
+        
+      } catch (e) {
+        throw Exception('Error al obtener presupuestos: $e');
+      }
+    }
 }

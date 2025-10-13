@@ -30,9 +30,8 @@ class BudgetViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Aquí iría la llamada al repositorio para obtener los presupuestos
-      // Ejemplo:
-      // _budgets = await _repository.fetchBudgets();
+      _budgets = await _repository.getBudgets();
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -66,7 +65,10 @@ class BudgetViewModel extends ChangeNotifier {
           startDate,
           endDate,
           alertThreshold,
-        );      
+        );
+        // Actualizar la lista de presupuestos después de registrar
+        await loadBudgets();
+
       } catch (e) {
         _error = e.toString();
       } finally {
