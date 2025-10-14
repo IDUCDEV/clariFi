@@ -102,6 +102,7 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
                           itemBuilder: (context, index) {
                             final budget = budgetViewModel.budgets[index];
                             return Budgetitemtolistbudgetdarshboard(
+                              id: budget.id ?? "",
                               title: budget.name ?? "",
                               budget: budget.amount.toString(),
                               spent: "0",

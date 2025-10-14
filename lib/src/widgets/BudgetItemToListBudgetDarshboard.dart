@@ -3,10 +3,11 @@ import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 
 class Budgetitemtolistbudgetdarshboard extends StatelessWidget {
+  final String id;
   final String title;
   final String budget;
   final String spent;
-  const Budgetitemtolistbudgetdarshboard({super.key, required this.title, required this.budget, required this.spent});
+  const Budgetitemtolistbudgetdarshboard({super.key, required this.id, required this.title, required this.budget, required this.spent});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +45,7 @@ class Budgetitemtolistbudgetdarshboard extends StatelessWidget {
                   icon: const Icon(Icons.more_vert, color: Colors.black),
                   onPressed: () {
                     // Handle edit action
-                    GoRouter.of(context).go('/editBudget');
+                    GoRouter.of(context).go('/editBudget/$id');
                   },
                 ),
               ],

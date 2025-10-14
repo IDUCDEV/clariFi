@@ -1,5 +1,5 @@
-
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
+import 'package:clarifi_app/src/viewmodels/budget_viewmodel.dart';
 import 'package:clarifi_app/src/views/auth/change_password.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
 import 'package:clarifi_app/src/views/auth/recovery_password.dart';
@@ -20,7 +20,7 @@ import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
 import 'package:clarifi_app/src/views/reports/reports_view.dart';
 import 'package:clarifi_app/src/views/settings/settings_view.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:provider/provider.dart';
 
 class AppRouter {
   final AuthViewModel authViewModel;
@@ -62,7 +62,7 @@ class AppRouter {
           path: '/reset-password',
           builder: (context, state) => const ChangePassword(),
         ),
-        
+
         // ShellRoute para mantener NavigationBar visible
         ShellRoute(
           builder: (context, state, child) {
@@ -72,49 +72,43 @@ class AppRouter {
             GoRoute(
               name: 'home',
               path: '/home',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const HomeView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const HomeView()),
             ),
             GoRoute(
               name: 'budgets',
               path: '/budgets',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const DashboardBudgets(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const DashboardBudgets()),
             ),
             GoRoute(
               name: 'transactions',
               path: '/transactions',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const TransactionsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const TransactionsView()),
             ),
             GoRoute(
               name: 'reports',
               path: '/reports',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const ReportsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const ReportsView()),
             ),
             GoRoute(
               name: 'settings',
               path: '/settings',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const SettingsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const SettingsView()),
             ),
             // Rutas anidadas que también muestran el NavigationBar
             GoRoute(
               name: 'accountsList',
               path: '/accounts/list',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const AccountsListView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const AccountsListView()),
             ),
           ],
         ),
-        
+
         // Rutas adicionales (sin NavigationBar)
         GoRoute(
           name: 'accounts',
@@ -134,17 +128,11 @@ class AppRouter {
         ),
         GoRoute(
           name: 'editBudget',
-          path: '/editBudget',
-          builder: (context, state) => EditBudget(
-            budgetId: '',
-            nameBudget: 'Comidas y Restaurantes',
-            amount: 1000.0,
-            startDate: DateTime(2023, 10, 1),
-            endDate: DateTime(2024, 10, 31),
-            threshold: "80",
-            category: 'Restaurantes',
-            periodo: 'Semanal',
-          ),
+          path: '/editBudget/:budgetId',
+          builder: (context, state) {
+            final String? budgetId = state.pathParameters['budgetId'];
+            return EditBudget(budgetId: budgetId ?? '');
+          },
         ),
         GoRoute(
           name: 'AlerstBudgets',
@@ -162,12 +150,20 @@ class AppRouter {
         final String location = state.matchedLocation;
 
         if (!loggedIn) {
-          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/' || location == '/recovery' || location == '/reset-password'
+          return location == '/login' ||
+                  location == '/signup' ||
+                  location == '/onboarding' ||
+                  location == '/' ||
+                  location == '/recovery' ||
+                  location == '/reset-password'
               ? null
               : '/login';
         }
 
-        if (location == '/login' || location == '/signup' || location == '/' || location == '/onboarding') {
+        if (location == '/login' ||
+            location == '/signup' ||
+            location == '/' ||
+            location == '/onboarding') {
           return '/home';
         }
 

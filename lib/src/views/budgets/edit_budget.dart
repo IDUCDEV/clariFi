@@ -1,30 +1,18 @@
 import "package:clarifi_app/src/colors/colors.dart";
+import "package:clarifi_app/src/viewmodels/budget_viewmodel.dart";
 import "package:clarifi_app/src/widgets/AlertThresholds.dart";
 import "package:clarifi_app/src/widgets/primary_button.dart";
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
+import "package:provider/provider.dart";
 
 class EditBudget extends StatefulWidget {
 
-    final String? budgetId;
-    final String nameBudget;
-    final double amount;
-    final DateTime? startDate;
-    final DateTime? endDate;
-    final String threshold;
-    final String category;
-    final String periodo;
+    final String budgetId;
 
     const EditBudget({
-        super.key, 
+        super.key,
         required this.budgetId,
-        required this.nameBudget,
-        required this.amount,
-        required this.startDate,
-        required this.endDate,
-        required this.threshold,
-        required this.category,
-        required this.periodo,
     });
 
     @override
@@ -42,6 +30,7 @@ class _EditBudgetState extends State<EditBudget> {
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedPeriodo = '';
+  bool _isLoading = true;
 
   String formatDate(DateTime? date) {
     if (date == null) return 'Seleccionar fecha';
@@ -87,19 +76,51 @@ class _EditBudgetState extends State<EditBudget> {
   @override
   void initState() {
     super.initState();
-    _nameBudgetController.text = widget.nameBudget;
-    _amountController.text = widget.amount.toString();
-    _thresholdController.text = widget.threshold.toString();
-    _startDate = widget.startDate;
-    _endDate = widget.endDate;
-    _categoryBudgetController.text = widget.category;
-    _selectedPeriodo = widget.periodo;
-    _selectedThreshold = widget.threshold.isNotEmpty ? double.tryParse(widget.threshold) : null;
+    _loadBudget();
+  }
+
+  Future<void> _loadBudget() async {
+    final budgetViewModel = Provider.of<BudgetViewModel>(context, listen: false);
+    await budgetViewModel.getBudgetById(widget.budgetId);
+    if (mounted) {
+      final budget = budgetViewModel.budget;
+      if (budget != null) {
+        setState(() {
+          _nameBudgetController.text = budget.name ?? '';
+          _amountController.text = budget.amount?.toStringAsFixed(2) ?? '';
+          _thresholdController.text = budget.alertThreshold?.toStringAsFixed(2) ?? '';
+          _categoryBudgetController.text = budget.categoryId ?? '';
+          _startDate = budget.startDate;
+          _endDate = budget.endDate;
+          _selectedPeriodo = budget.period ?? '';
+          _selectedThreshold = budget.alertThreshold;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
 
   @override
   Widget build(BuildContext context) {
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.cancel),
+            onPressed: () {
+              GoRouter.of(context).go('/budgets');
+            },
+          ),
+          title: const Text('Editar Presupuesto'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -155,7 +176,7 @@ class _EditBudgetState extends State<EditBudget> {
                             const SizedBox(width: 16.0),
                                   Expanded(
                                     child: Text(
-                                      widget.category,
+                                      _categoryBudgetController.text.isEmpty ? 'Tipo de Categoría' : _categoryBudgetController.text,
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
                                   ),

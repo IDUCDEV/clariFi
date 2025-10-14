@@ -73,4 +73,42 @@ class SupabaseBudgetRepository {
         throw Exception('Error al obtener presupuestos: $e');
       }
     }
+
+    Future<BudgetModel?> getBudgetById(String budgetId) async {
+        final userId = _currentUserId;
+
+        if (userId == null) {
+          throw Exception('User not authenticated');
+        }
+
+        try {
+          final response = await _supabaseClient
+              .from('budgets')
+              .select()
+              .eq('id', budgetId)
+              .eq('user_id', userId)
+              .single();
+
+          return BudgetModel.fromJson(response);
+        } on PostgrestException catch (e) {
+          throw Exception('Error al obtener presupuesto: ${e.message}');
+        } catch (e) {
+          throw Exception('Error al obtener presupuesto: $e');
+        }
+      }
+
+    Future<void> deleteBudget(String budgetId) async {
+      final userId = _currentUserId;
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+      try {
+        await _supabaseClient.from('budgets').delete().eq('id', budgetId);
+      } on PostgrestException catch (e) {
+        throw Exception('Error al eliminar presupuesto: ${e.message}');
+      } catch (e) {
+        throw Exception('Error al eliminar presupuesto: $e');
+      }
+    }
 }
