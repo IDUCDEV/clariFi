@@ -7,16 +7,15 @@ import 'package:clarifi_app/src/views/auth/signup_view.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/home/accounts_view.dart';
 import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
-//import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
 import 'package:clarifi_app/src/views/navigation/main_navigation_view.dart';
 import 'package:clarifi_app/src/views/budgets/budgets_view.dart';
-import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
+//import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
 import 'package:clarifi_app/src/views/reports/reports_view.dart';
 import 'package:clarifi_app/src/views/settings/settings_view.dart';
 import 'package:clarifi_app/src/views/transactions/transactions_list_view.dart';
-import 'package:clarifi_app/src/views/transactions/transaction_add_view.dart';
+import 'package:clarifi_app/src/views/transactions/new_transaction_view.dart';
 
 
 import 'package:go_router/go_router.dart';
@@ -132,9 +131,12 @@ class AppRouter {
         ),
         GoRoute(
           name: 'transactionsAdd',
-          path: '/transactionsAdd',
-          builder: (context, state) => const NewTransactionScreen(),
-        ),
+          path: '/transactionsAdd/:type',
+          builder: (context, state) {
+          final type = state.pathParameters['type'] ?? 'expense';
+          return NewTransactionView(type: type);
+        },
+      ),
       ],
       redirect: (context, state) {
         final bool loggedIn = authViewModel.isAuthenticated;

@@ -5,11 +5,14 @@ import 'package:clarifi_app/src/viewmodels/home_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:clarifi_app/src/repositories/supabase_account_repository.dart';
+import 'package:clarifi_app/src/repositories/supabase_transaction_repository.dart';
+import 'package:clarifi_app/src/repositories/supabase_category_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,7 +110,10 @@ class _MyAppState extends State<MyApp> {
         ),
         // TransactionViewModel depends on SupabaseService
         ChangeNotifierProvider<TransactionViewModel>(
-          create: (context) => TransactionViewModel(context.read<SupabaseService>()),
+        create: (_) => TransactionViewModel(
+        SupabaseTransactionRepository(Supabase.instance.client), // TransactionRepository
+        SupabaseCategoryRepository(Supabase.instance.client),    // CategoryRepository
+          ),
         ),
         // AccountViewModel depends on SupabaseAccountRepository
         ChangeNotifierProvider<AccountViewModel>(
