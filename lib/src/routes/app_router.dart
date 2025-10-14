@@ -1,5 +1,4 @@
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
-import 'package:clarifi_app/src/viewmodels/budget_viewmodel.dart';
 import 'package:clarifi_app/src/views/auth/change_password.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
 import 'package:clarifi_app/src/views/auth/recovery_password.dart';
@@ -20,7 +19,7 @@ import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
 import 'package:clarifi_app/src/views/reports/reports_view.dart';
 import 'package:clarifi_app/src/views/settings/settings_view.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+
 
 class AppRouter {
   final AuthViewModel authViewModel;

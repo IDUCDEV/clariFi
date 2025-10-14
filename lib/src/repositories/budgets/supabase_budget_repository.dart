@@ -31,7 +31,8 @@ class SupabaseBudgetRepository {
         amount: amount,
         period: period,
         userId: userId,
-        categoryId: null, // Siempre null por ahora hasta implementar selección de categoría
+        categoryId:
+            null, // Siempre null por ahora hasta implementar selección de categoría
         startDate: startDate,
         endDate: endDate,
         alertThreshold: alertThreshold,
@@ -50,8 +51,106 @@ class SupabaseBudgetRepository {
     }
   }
 
+  Future<List<BudgetModel>> getBudgets() async {
+    final userId = _currentUserId;
 
-    Future<List<BudgetModel>> getBudgets() async {
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await _supabaseClient
+          .from('budgets')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      return response.map((json) => BudgetModel.fromJson(json)).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Error al obtener presupuestos: ${e.message}');
+    } catch (e) {
+      throw Exception('Error al obtener presupuestos: $e');
+    }
+  }
+
+  Future<BudgetModel?> getBudgetById(String budgetId) async {
+    final userId = _currentUserId;
+
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await _supabaseClient
+          .from('budgets')
+          .select()
+          .eq('id', budgetId)
+          .eq('user_id', userId)
+          .single();
+
+      return BudgetModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw Exception('Error al obtener presupuesto: ${e.message}');
+    } catch (e) {
+      throw Exception('Error al obtener presupuesto: $e');
+    }
+  }
+
+  Future<void> deleteBudget(String budgetId) async {
+    final userId = _currentUserId;
+
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+    try {
+      await _supabaseClient.from('budgets').delete().eq('id', budgetId);
+    } on PostgrestException catch (e) {
+      throw Exception('Error al eliminar presupuesto: ${e.message}');
+    } catch (e) {
+      throw Exception('Error al eliminar presupuesto: $e');
+    }
+  }
+
+  Future<void> updateBudget({
+    required String id,
+    required String name,
+    required double amount,
+    required String period,
+    required String categoryId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double? alertThreshold,
+  }) async {
+    final userId = _currentUserId;
+
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final budget = BudgetModel(
+      id: id,
+      name: name,
+      amount: amount,
+      period: period,
+      userId: userId,
+      categoryId:null, // Siempre null por ahora hasta implementar selección de categoría
+      startDate: startDate,
+      endDate: endDate,
+      alertThreshold: alertThreshold,
+    );
+    try {
+      await _supabaseClient
+          .from('budgets')
+          .update(budget.toJson())
+          .eq('id', budget.id!);
+    } on PostgrestException catch (e) {
+      throw Exception('Error al actualizar presupuesto: ${e.message}');
+    } catch (e) {
+      throw Exception('Error al actualizar presupuesto: $e');
+    }
+  }
+
+  Future<num> getTotalBudgetAmount() async {
       final userId = _currentUserId;
 
       if (userId == null) {
@@ -61,54 +160,20 @@ class SupabaseBudgetRepository {
       try {
         final response = await _supabaseClient
             .from('budgets')
-            .select()
-            .eq('user_id', userId)
-            .order('created_at', ascending: false);
+            .select('amount')
+            .eq('user_id', userId);
 
-        return response.map((json) => BudgetModel.fromJson(json)).toList();
+        final amounts = (response as List)
+            .map((item) => item['amount'] as num? ?? 0)
+            .toList();
+
+        final total = amounts.fold<num>(0, (prev, element) => prev + element);
+
+        return total;
       } on PostgrestException catch (e) {
-        throw Exception('Error al obtener presupuestos: ${e.message}');
-        
+        throw Exception('Error al obtener el total del presupuesto: ${e.message}');
       } catch (e) {
-        throw Exception('Error al obtener presupuestos: $e');
-      }
-    }
-
-    Future<BudgetModel?> getBudgetById(String budgetId) async {
-        final userId = _currentUserId;
-
-        if (userId == null) {
-          throw Exception('User not authenticated');
-        }
-
-        try {
-          final response = await _supabaseClient
-              .from('budgets')
-              .select()
-              .eq('id', budgetId)
-              .eq('user_id', userId)
-              .single();
-
-          return BudgetModel.fromJson(response);
-        } on PostgrestException catch (e) {
-          throw Exception('Error al obtener presupuesto: ${e.message}');
-        } catch (e) {
-          throw Exception('Error al obtener presupuesto: $e');
-        }
-      }
-
-    Future<void> deleteBudget(String budgetId) async {
-      final userId = _currentUserId;
-
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-      try {
-        await _supabaseClient.from('budgets').delete().eq('id', budgetId);
-      } on PostgrestException catch (e) {
-        throw Exception('Error al eliminar presupuesto: ${e.message}');
-      } catch (e) {
-        throw Exception('Error al eliminar presupuesto: $e');
+        throw Exception('Error al obtener el total del presupuesto: $e');
       }
     }
 }

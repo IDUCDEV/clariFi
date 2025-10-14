@@ -2,30 +2,27 @@ import "package:clarifi_app/src/colors/colors.dart";
 import "package:clarifi_app/src/viewmodels/budget_viewmodel.dart";
 import "package:clarifi_app/src/widgets/AlertThresholds.dart";
 import "package:clarifi_app/src/widgets/primary_button.dart";
+import "package:clarifi_app/src/widgets/secondary_button.dart";
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:provider/provider.dart";
 
 class EditBudget extends StatefulWidget {
+  final String budgetId;
 
-    final String budgetId;
+  const EditBudget({super.key, required this.budgetId});
 
-    const EditBudget({
-        super.key,
-        required this.budgetId,
-    });
-
-    @override
-    State<EditBudget> createState() => _EditBudgetState();
+  @override
+  State<EditBudget> createState() => _EditBudgetState();
 }
 
 class _EditBudgetState extends State<EditBudget> {
-
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameBudgetController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _thresholdController = TextEditingController();
-  final TextEditingController _categoryBudgetController = TextEditingController();
+  final TextEditingController _categoryBudgetController =
+      TextEditingController();
   double? _selectedThreshold;
   DateTime? _startDate;
   DateTime? _endDate;
@@ -54,7 +51,6 @@ class _EditBudgetState extends State<EditBudget> {
     }
   }
 
-
   Future<void> _selectEndDate(BuildContext context) async {
     if (_startDate == null) return; // No permitir antes de seleccionar inicio
 
@@ -71,16 +67,19 @@ class _EditBudgetState extends State<EditBudget> {
     }
   }
 
-  
-
   @override
   void initState() {
     super.initState();
-    _loadBudget();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBudget();
+    });
   }
 
   Future<void> _loadBudget() async {
-    final budgetViewModel = Provider.of<BudgetViewModel>(context, listen: false);
+    final budgetViewModel = Provider.of<BudgetViewModel>(
+      context,
+      listen: false,
+    );
     await budgetViewModel.getBudgetById(widget.budgetId);
     if (mounted) {
       final budget = budgetViewModel.budget;
@@ -88,7 +87,8 @@ class _EditBudgetState extends State<EditBudget> {
         setState(() {
           _nameBudgetController.text = budget.name ?? '';
           _amountController.text = budget.amount?.toStringAsFixed(2) ?? '';
-          _thresholdController.text = budget.alertThreshold?.toStringAsFixed(2) ?? '';
+          _thresholdController.text =
+              budget.alertThreshold?.toStringAsFixed(2) ?? '';
           _categoryBudgetController.text = budget.categoryId ?? '';
           _startDate = budget.startDate;
           _endDate = budget.endDate;
@@ -100,9 +100,12 @@ class _EditBudgetState extends State<EditBudget> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final budgetViewModel = Provider.of<BudgetViewModel>(
+      context,
+      listen: false,
+    );
 
     if (_isLoading) {
       return Scaffold(
@@ -115,9 +118,7 @@ class _EditBudgetState extends State<EditBudget> {
           ),
           title: const Text('Editar Presupuesto'),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -132,18 +133,18 @@ class _EditBudgetState extends State<EditBudget> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Editar Presupuesto', textAlign: TextAlign.center,),
+            const Text('Editar Presupuesto', textAlign: TextAlign.center),
           ],
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(padding: const EdgeInsets.all(16.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
               Form(
                 key: _formKey,
-                child:
-                  Column(
+                child: Column(
                   children: [
                     TextFormField(
                       controller: _nameBudgetController,
@@ -172,17 +173,22 @@ class _EditBudgetState extends State<EditBudget> {
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
                           children: [
-                            const Icon(Icons.category, color: Colors.purple,),
+                            const Icon(Icons.category, color: Colors.purple),
                             const SizedBox(width: 16.0),
-                                  Expanded(
-                                    child: Text(
-                                      _categoryBudgetController.text.isEmpty ? 'Tipo de Categoría' : _categoryBudgetController.text,
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
+                            Expanded(
+                              child: Text(
+                                _categoryBudgetController.text.isEmpty
+                                    ? 'Tipo de Categoría'
+                                    : _categoryBudgetController.text,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16.0),
                     TextFormField(
@@ -195,7 +201,9 @@ class _EditBudgetState extends State<EditBudget> {
                         filled: true,
                         fillColor: AppColors.blush,
                       ),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor ingresa la cantidad';
@@ -213,77 +221,76 @@ class _EditBudgetState extends State<EditBudget> {
               const SizedBox(height: 16.0),
               Align(
                 alignment: Alignment.centerLeft,
-                child:const Text('Periodo', textAlign: TextAlign.left,style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),)
+                child: const Text(
+                  'Periodo',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 16.0),
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<String>(
-                segments: const <ButtonSegment<String>>[
-                  ButtonSegment(
-                    value: 'Mensual',
-                    label: Text('Mensual'),
-                  ),
-                  ButtonSegment(
-                    value: 'Semanal',
-                    label: Text('Semanal'),
-                  ),
-                  ButtonSegment(
-                    value: 'Anual',
-                    label: Text('Anual'),
-                  ),
-                ],
-                selected: <String>{_selectedPeriodo},
-                onSelectionChanged: (newSelection) {
-                  setState(() {
-                    _selectedPeriodo = newSelection.first;
-                  });
-                },
-                style: ButtonStyle(
-                  backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-                    (states) => states.contains(WidgetState.selected)
-                        ? Colors.purple
-                        : Colors.grey.shade200,
-                  ),
-                  foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                    (states) => states.contains(WidgetState.selected)
-                        ? Colors.white
-                        : Colors.black,
+                  segments: const <ButtonSegment<String>>[
+                    ButtonSegment(value: 'Mensual', label: Text('Mensual')),
+                    ButtonSegment(value: 'Semanal', label: Text('Semanal')),
+                    ButtonSegment(value: 'Anual', label: Text('Anual')),
+                  ],
+                  selected: <String>{_selectedPeriodo.isEmpty ? 'Mensual' : _selectedPeriodo == 'monthly' ? 'Mensual' : _selectedPeriodo == 'weekly' ? 'Semanal' : _selectedPeriodo == 'yearly' ? 'Anual' : _selectedPeriodo},
+                  onSelectionChanged: (newSelection) {
+                    setState(() {
+                      _selectedPeriodo = newSelection.first;
+                    });
+                  },
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                      (states) => states.contains(WidgetState.selected)
+                          ? Colors.purple
+                          : Colors.grey.shade200,
+                    ),
+                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+                      (states) => states.contains(WidgetState.selected)
+                          ? Colors.white
+                          : Colors.black,
+                    ),
                   ),
                 ),
-              ),
               ),
               const SizedBox(height: 16.0),
               Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      // Fecha de inicio
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _selectStartDate(context),
-                          icon: const Icon(Icons.calendar_today),
-                          label: Text("Inicio: ${formatDate(_startDate)}"),
-                        ),
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    // Fecha de inicio
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _selectStartDate(context),
+                        icon: const Icon(Icons.calendar_today),
+                        label: Text("Inicio: ${formatDate(_startDate)}"),
                       ),
-                      const SizedBox(width: 10),
+                    ),
+                    const SizedBox(width: 10),
 
-                      // Fecha de finalización
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _startDate == null
-                              ? null
-                              : () => _selectEndDate(context),
-                          icon: const Icon(Icons.calendar_today),
-                          label: Text("Fin: ${formatDate(_endDate)}"),
-                        ),
+                    // Fecha de finalización
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _startDate == null
+                            ? null
+                            : () => _selectEndDate(context),
+                        icon: const Icon(Icons.calendar_today),
+                        label: Text("Fin: ${formatDate(_endDate)}"),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Align(
+              ),
+              Align(
                 alignment: Alignment.centerLeft,
-                child:const Text('Alerta de Umbrales', textAlign: TextAlign.left,style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),)
+                child: const Text(
+                  'Alerta de Umbrales',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 16.0),
               //aqui va el widget
@@ -302,15 +309,63 @@ class _EditBudgetState extends State<EditBudget> {
                   if (_formKey.currentState!.validate()) {
                     // Lógica para guardar el presupuesto
                     // Simular delay
-                    await Future.delayed(const Duration(seconds: 2));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Presupuesto guardado')),
-                    );
+                    try {
+                      await budgetViewModel.updateBudget(
+                        id: widget.budgetId,
+                        name: _nameBudgetController.text,
+                        amount: double.parse(_amountController.text),
+                        period: _selectedPeriodo == 'Mensual' ? 'monthly' : _selectedPeriodo == 'Semanal' ? 'weekly' : _selectedPeriodo == 'Anual' ? 'yearly' : _selectedPeriodo,
+                        categoryId: _categoryBudgetController.text,
+                        startDate: _startDate ?? DateTime.now(),
+                        endDate:
+                            _endDate ??
+                            (_startDate ?? DateTime.now()).add(
+                              const Duration(days: 30),
+                            ),
+                        alertThreshold: _selectedThreshold,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: AppColors.success,
+                          content: Text(
+                            'Presupuesto actualizado exitosamente',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      );
+                      GoRouter.of(context).go('/budgets');
+                    } catch (e) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
                   }
                 },
               ),
-          ],
-        )),
+              const SizedBox(height: 16.0),
+              SecondaryButton(
+                text: 'Eliminar Presupuesto',
+                onPressed: () async {
+                  // Lógica para eliminar el presupuesto
+                  await budgetViewModel.deleteBudget(widget.budgetId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      backgroundColor: AppColors.success,
+                      content: Text(
+                        'Presupuesto eliminado exitosamente',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  );
+                  if (mounted){  
+                    GoRouter.of(context).go('/budgets');
+                  }
+                  
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

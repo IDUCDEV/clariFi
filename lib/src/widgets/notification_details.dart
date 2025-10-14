@@ -34,7 +34,7 @@ class NotificationDetails extends StatelessWidget {
 class _DetailItem extends StatelessWidget {
   final String text;
 
-  const _DetailItem({super.key, required this.text});
+  const _DetailItem({required this.text});
 
   @override
   Widget build(BuildContext context) {

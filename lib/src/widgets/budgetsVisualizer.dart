@@ -2,7 +2,7 @@ import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:flutter/material.dart';
 
 class Budgetsvisualizer extends StatelessWidget {
-  final double totalBudget;
+  final num totalBudget;
   final String title;
   const Budgetsvisualizer({
     super.key,

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/budget.dart';
-
 
 enum BudgetStatus { good, over, neutral }
 

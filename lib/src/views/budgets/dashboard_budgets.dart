@@ -20,8 +20,11 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
   @override
   void initState() {
     super.initState();
-    final budgetViewModel = Provider.of<BudgetViewModel>(context, listen: false);
-    budgetViewModel.loadBudgets();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final budgetViewModel = Provider.of<BudgetViewModel>(context, listen: false);
+      budgetViewModel.loadBudgets();
+      budgetViewModel.getTotalBudgetAmount();
+    });
   }
 
 
@@ -53,14 +56,16 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              Row(
+              budgetViewModel.totalBudgetAmount == null
+              ? const CircularProgressIndicator()
+                  : 
+                Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Budgetsvisualizer(
-                    totalBudget: 12000,
+                    totalBudget: budgetViewModel.totalBudgetAmount ?? 0,
                     title: "Total Presupuesto",
                   ),
-
                   Budgetsvisualizer(totalBudget: 8500, title: "Total Gastado"),
                 ],
               ),

@@ -23,6 +23,10 @@ class BudgetViewModel extends ChangeNotifier {
   BudgetModel? _budget;
   BudgetModel? get budget => _budget;
 
+  //total presupuestario del usuario
+  num? _totalBudgetAmount = 0.0;
+  num? get totalBudgetAmount => _totalBudgetAmount;
+
   // Métodos para cargar datos
 
   Future<void> loadBudgets() async {
@@ -103,6 +107,61 @@ class BudgetViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
+    }
+  }
+
+
+  Future<void> updateBudget({
+    required String id,
+    required String name,
+    required double amount,
+    required String period,
+    required String categoryId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double? alertThreshold,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Aquí iría la llamada al repositorio para actualizar el presupuesto
+      // Ejemplo:
+      await _repository.updateBudget(
+        id: id,
+        name: name,
+        amount: amount,
+        period: period,
+        categoryId: categoryId,
+        startDate: startDate,
+        endDate: endDate,
+        alertThreshold: alertThreshold,
+      );
+      // Actualizar la lista de presupuestos después de actualizar
+      await loadBudgets();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  Future<void> getTotalBudgetAmount() async {  
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _totalBudgetAmount = await _repository.getTotalBudgetAmount();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
