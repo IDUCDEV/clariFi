@@ -64,17 +64,12 @@ class _HomeViewState extends State<HomeView> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-<<<<<<< HEAD
-        onPressed:() => context.goNamed('financial_summary'),
-        child: const Icon(Icons.add),
-
-=======
         onPressed: () => _showCreateAccountModal(context),
         tooltip: 'Crear Nueva Cuenta',
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
->>>>>>> Develop
       ),
     );
   }
 }
+

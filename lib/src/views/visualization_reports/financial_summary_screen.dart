@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      
       title: 'Resumen Financiero',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -25,7 +23,7 @@ class MyApp extends StatelessWidget {
 }
 
 class FinancialSummaryScreen extends StatefulWidget {
-  const FinancialSummaryScreen({Key? key}) : super(key: key);
+  const FinancialSummaryScreen({super.key});
 
   @override
   State<FinancialSummaryScreen> createState() => _FinancialSummaryScreenState();
@@ -50,10 +48,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                 children: [
                   const Text(
                     'Resumen financiero',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 20),
                   // Tabs
@@ -69,7 +64,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                 ],
               ),
             ),
-            
+
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(
@@ -80,11 +75,11 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                     // Monthly expenses card
                     _buildMonthlyExpensesCard(),
                     const SizedBox(height: 20),
-                    
+
                     // Expense breakdown
                     _buildExpenseBreakdown(),
                     const SizedBox(height: 20),
-                    
+
                     // Trends card
                     _buildTrendsCard(),
                     const SizedBox(height: 20),
@@ -95,7 +90,6 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -121,7 +115,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
     );
   }
 
-   Widget _buildMonthlyExpensesCard() {
+  Widget _buildMonthlyExpensesCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -136,10 +130,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
             children: [
               const Text(
                 'Gastos mensuales por categoría',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               Icon(Icons.more_vert, color: Colors.grey[400], size: 20),
             ],
@@ -150,20 +141,14 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
             children: [
               const Text(
                 '\$1,250.00',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Este mes +12%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.green[600]),
                 ),
               ),
             ],
@@ -180,7 +165,22 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                   BarChartData(
                     alignment: BarChartAlignment.spaceEvenly,
                     maxY: 100,
-                    barTouchData: BarTouchData(enabled: false),
+
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchCallback:
+                          (FlTouchEvent event, BarTouchResponse? response) {
+                            if (!event.isInterestedForInteractions ||
+                                response == null ||
+                                response.spot == null) {
+                              return;
+                            }
+                            final index = response.spot!.touchedBarGroupIndex;
+                            _onBarTapped(context, index);
+                          },
+
+                    ),
+
                     titlesData: FlTitlesData(
                       show: true,
                       bottomTitles: AxisTitles(
@@ -188,10 +188,21 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             const months = [
-                              'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-                              'Jul', 'Agost', 'Sep', 'Oct', 'Nov', 'Dic'
+                              'Ene',
+                              'Feb',
+                              'Mar',
+                              'Abr',
+                              'May',
+                              'Jun',
+                              'Jul',
+                              'Agost',
+                              'Sep',
+                              'Oct',
+                              'Nov',
+                              'Dic',
                             ];
-                            if (value.toInt() >= 0 && value.toInt() < months.length) {
+                            if (value.toInt() >= 0 &&
+                                value.toInt() < months.length) {
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
@@ -207,9 +218,15 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                           },
                         ),
                       ),
-                      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                     ),
                     gridData: FlGridData(show: false),
                     borderData: FlBorderData(show: false),
@@ -218,10 +235,18 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                       _buildBarGroup(1, 50, const Color(0xFFE8D7FF)),
                       _buildBarGroup(2, 70, const Color(0xFF7C3AED)),
                       _buildBarGroup(3, 40, const Color(0xFFE8D7FF)),
-                      _buildBarGroup(4, 55, const Color.fromARGB(255, 151, 113, 201)),
+                      _buildBarGroup(
+                        4,
+                        55,
+                        const Color.fromARGB(255, 151, 113, 201),
+                      ),
                       _buildBarGroup(5, 35, const Color(0xFFE8D7FF)),
                       _buildBarGroup(6, 40, const Color(0xFFE8D7FF)),
-                      _buildBarGroup(7, 55, const Color.fromARGB(255, 151, 113, 201)),
+                      _buildBarGroup(
+                        7,
+                        55,
+                        const Color.fromARGB(255, 151, 113, 201),
+                      ),
                       _buildBarGroup(8, 35, const Color(0xFFE8D7FF)),
                       _buildBarGroup(9, 60, const Color(0xFFE8D7FF)),
                       _buildBarGroup(10, 45, const Color(0xFF7C3AED)),
@@ -236,6 +261,15 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
       ),
     );
   }
+
+  // Metodo para navegar a  detalles de gastos  del mes 
+  void _onBarTapped(BuildContext context, int index) {
+
+    context.go('/month_detail/$index');
+
+}
+
+
   BarChartGroupData _buildBarGroup(int x, double y, Color color) {
     return BarChartGroupData(
       x: x,
@@ -251,34 +285,42 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
   }
 
   Widget _buildExpenseBreakdown() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Desglose de gastos',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+    return GestureDetector(
+     onTap: () {
+      context.go('/accountAnalysisView');
+},
+
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Desglose de gastos',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-          ),
-          const SizedBox(height: 20),
-          _buildExpenseItem('Alimento', '\$300', 'Transporte', '\$200'),
-          const SizedBox(height: 16),
-          _buildExpenseItem('Entretenimiento', '\$150', 'Utilidades', '\$250'),
-          const SizedBox(height: 16),
-          _buildExpenseItem('Alquiler', '\$200', 'Otro', '\$150'),
-        ],
+            const SizedBox(height: 20),
+            _buildExpenseItem('Alimento', '\$300', 'Transporte', '\$200'),
+            const SizedBox(height: 16),
+            _buildExpenseItem('Entretenimiento', '\$150', 'Utilidades', '\$250'),
+            const SizedBox(height: 16),
+            _buildExpenseItem('Alquiler', '\$200', 'Otro', '\$150'),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildExpenseItem(String label1, String amount1, String label2, String amount2) {
+  Widget _buildExpenseItem(
+    String label1,
+    String amount1,
+    String label2,
+    String amount2,
+  ) {
     return Row(
       children: [
         Expanded(
@@ -287,10 +329,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
             children: [
               Text(
                 label1,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               Text(
                 amount1,
@@ -309,10 +348,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
             children: [
               Text(
                 label2,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               Text(
                 amount2,
@@ -343,10 +379,7 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
             children: [
               const Text(
                 'Tendencias de gastos',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               Icon(Icons.more_vert, color: Colors.grey[400], size: 20),
             ],
@@ -357,20 +390,14 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
             children: [
               const Text(
                 '\$7,500.00',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Últimos 6 meses +16%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.green[600]),
                 ),
               ),
             ],
@@ -388,8 +415,16 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-                        if (value.toInt() >= 0 && value.toInt() < months.length) {
+                        const months = [
+                          'Ene',
+                          'Feb',
+                          'Mar',
+                          'Abr',
+                          'May',
+                          'Jun',
+                        ];
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < months.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
@@ -405,9 +440,15 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -428,62 +469,6 @@ class _FinancialSummaryScreenState extends State<FinancialSummaryScreen> {
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-              _buildNavItem(Icons.pie_chart_outline, 'Stats', 1),
-              _buildNavItem(Icons.swap_horiz, 'Trans', 2),
-              _buildNavItem(Icons.bar_chart, 'Reportes', 3),
-              _buildNavItem(Icons.settings_outlined, 'Ajustes', 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isSelected = _selectedBottomNav == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedBottomNav = index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? const Color.fromARGB(255, 58, 171, 237) : Colors.grey,
-            size: 24,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? const Color(0xFF7C3AED) : Colors.grey,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
         ],

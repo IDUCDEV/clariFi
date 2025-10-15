@@ -1,4 +1,3 @@
-
 import 'package:clarifi_app/src/viewmodels/auth_viewmodel.dart';
 import 'package:clarifi_app/src/views/auth/change_password.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
@@ -13,10 +12,11 @@ import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
 import 'package:clarifi_app/src/views/navigation/main_navigation_view.dart';
 import 'package:clarifi_app/src/views/budgets/budgets_view.dart';
 import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
-import 'package:clarifi_app/src/views/reports/reports_view.dart';
 import 'package:clarifi_app/src/views/settings/settings_view.dart';
+import 'package:clarifi_app/src/views/visualization_reports/account_analysis.dart';
+import 'package:clarifi_app/src/views/visualization_reports/financial_summary_screen.dart';
+import 'package:clarifi_app/src/views/visualization_reports/month_detail_view.dart';
 import 'package:go_router/go_router.dart';
-
 
 class AppRouter {
   final AuthViewModel authViewModel;
@@ -58,7 +58,22 @@ class AppRouter {
           path: '/reset-password',
           builder: (context, state) => const ChangePassword(),
         ),
-        
+
+        GoRoute(
+          path: '/month_detail/:monthIndex',
+          builder: (context, state) {
+            final monthIndexStr = state.pathParameters['monthIndex']!;
+            final monthIndex = int.parse(monthIndexStr);
+            return MonthDetailView(monthIndex: monthIndex, amount: 50);
+          },
+
+        ),
+        GoRoute(
+          name: 'account_analisys',
+          path: '/accountAnalysisView',
+          builder: (context, state) => const AccountAnalysisScreen(),
+        ),
+
         // ShellRoute para mantener NavigationBar visible
         ShellRoute(
           builder: (context, state, child) {
@@ -68,49 +83,43 @@ class AppRouter {
             GoRoute(
               name: 'home',
               path: '/home',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const HomeView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const HomeView()),
             ),
             GoRoute(
               name: 'budgets',
               path: '/budgets',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const BudgetsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const BudgetsView()),
             ),
             GoRoute(
               name: 'transactions',
               path: '/transactions',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const TransactionsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const TransactionsView()),
             ),
             GoRoute(
               name: 'reports',
               path: '/reports',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const ReportsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const FinancialSummaryScreen()),
             ),
             GoRoute(
               name: 'settings',
               path: '/settings',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const SettingsView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const SettingsView()),
             ),
             // Rutas anidadas que también muestran el NavigationBar
             GoRoute(
               name: 'accountsList',
               path: '/accounts/list',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: const AccountsListView(),
-              ),
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: const AccountsListView()),
             ),
           ],
         ),
-        
+
         // Rutas adicionales (sin NavigationBar)
         GoRoute(
           name: 'accounts',
@@ -122,20 +131,26 @@ class AppRouter {
           path: '/transactions/new',
           builder: (context, state) => const TransactionFormView(),
         ),
-
-   
       ],
       redirect: (context, state) {
         final bool loggedIn = authViewModel.isAuthenticated;
         final String location = state.matchedLocation;
 
         if (!loggedIn) {
-          return location == '/login' || location == '/signup' || location == '/onboarding' || location == '/' || location == '/recovery' || location == '/reset-password'
+          return location == '/login' ||
+                  location == '/signup' ||
+                  location == '/onboarding' ||
+                  location == '/' ||
+                  location == '/recovery' ||
+                  location == '/reset-password'
               ? null
               : '/login';
         }
 
-        if (location == '/login' || location == '/signup' || location == '/' || location == '/onboarding') {
+        if (location == '/login' ||
+            location == '/signup' ||
+            location == '/' ||
+            location == '/onboarding') {
           return '/home';
         }
 

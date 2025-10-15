@@ -56,6 +56,7 @@ class MainNavigationView extends StatelessWidget {
             selectedIcon: Icon(Icons.bar_chart),
             icon: Icon(Icons.bar_chart_outlined),
             label: 'Reportes',
+            
           ),
           NavigationDestination(
             selectedIcon: Icon(Icons.settings),
