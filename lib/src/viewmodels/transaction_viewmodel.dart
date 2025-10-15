@@ -13,7 +13,12 @@ class TransactionViewModel extends ChangeNotifier {
   List<TransactionModel> _filteredTransactions = [];
 
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
   String? _errorMessage;
+
+  int _page = 0;
+  final int _limit = 20;
 
   // 🔹 Filtros actuales
   String? _selectedCategoryId;
@@ -24,31 +29,69 @@ class TransactionViewModel extends ChangeNotifier {
 
   TransactionViewModel(this._repository, this.categoryRepository);
 
-  // 🔹 Getters
+  // ============================================================
+  // Getters
+  // ============================================================
   List<TransactionModel> get transactions => _filteredTransactions;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
 
   // ============================================================
-  // Cargar transacciones
+  // Cargar transacciones (inicio)
   // ============================================================
   Future<void> loadTransactions() async {
     _isLoading = true;
     _errorMessage = null;
+    _page = 0;
+    _hasMore = true;
     notifyListeners();
 
     try {
-      _allTransactions = await _repository.getTransactions();
+      final data = await _repository.getTransactions(offset: 0, limit: _limit);
+      _allTransactions = data;
       _filteredTransactions = List.from(_allTransactions);
+      _page = 1;
 
       for (var t in _allTransactions) {
         print('💰 ${t.note ?? t.categoryName} | Cuenta: ${t.accountName}');
       }
     } catch (e) {
       _errorMessage = e.toString();
+      print('⚠️ Error cargando transacciones: $e');
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================================================
+  // Cargar más transacciones (scroll infinito)
+  // ============================================================
+  Future<void> loadMoreTransactions() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final offset = _page * _limit;
+      final data = await _repository.getTransactions(offset: offset, limit: _limit);
+
+      if (data.isEmpty) {
+        _hasMore = false;
+      } else {
+        _allTransactions.addAll(data);
+        _filteredTransactions = List.from(_allTransactions);
+        _page++;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      print('⚠️ Error cargando más transacciones: $e');
+    } finally {
+      _isLoadingMore = false;
       notifyListeners();
     }
   }
@@ -72,23 +115,29 @@ class TransactionViewModel extends ChangeNotifier {
     _filteredTransactions = _allTransactions.where((t) {
       bool matches = true;
 
-      // 🔸 Filtrar por categoría, cuenta, tipo y fecha
+      // 🔸 Filtro por categoría
       if (_selectedCategoryId != null && t.categoryId != _selectedCategoryId) {
         matches = false;
       }
+
+      // 🔸 Filtro por cuenta
       if (_selectedAccountId != null && t.accountId != _selectedAccountId) {
         matches = false;
       }
+
+      // 🔸 Filtro por tipo
       if (_selectedType != null && t.type != _selectedType) {
         matches = false;
       }
+
+      // 🔸 Filtro por rango de fechas
       if (_selectedDateRange != null) {
         matches = matches &&
             t.date.isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
             t.date.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
       }
 
-      // 🔸 Filtro por texto (nota / descripción / categoría)
+      // 🔸 Filtro por texto
       if (_searchQuery.isNotEmpty) {
         final lowerQuery = _searchQuery.toLowerCase();
         final note = t.note?.toLowerCase() ?? '';
@@ -128,6 +177,13 @@ class TransactionViewModel extends ChangeNotifier {
     _filteredTransactions = List.from(_allTransactions);
     notifyListeners();
   }
+  
+Future<void> refreshTransactions() async {
+  _allTransactions.clear();
+  _filteredTransactions.clear();
+  notifyListeners();
+  await loadTransactions();
+}
 
   // ============================================================
   // CRUD
@@ -177,7 +233,7 @@ class TransactionViewModel extends ChangeNotifier {
   }
 
   // ============================================================
-  // Cargar categorías
+  // Cargar categorías por tipo
   // ============================================================
   Future<void> loadCategories(String type) async {
     try {
@@ -186,7 +242,7 @@ class TransactionViewModel extends ChangeNotifier {
       notifyListeners();
 
       categories = await categoryRepository.fetchAllCategories(type: type);
-      print('📝 Response categories: $categories');
+      print('📝 Categorías cargadas: ${categories.length}');
     } catch (e) {
       _errorMessage = e.toString();
       print('⚠️ Error cargando categorías: $e');

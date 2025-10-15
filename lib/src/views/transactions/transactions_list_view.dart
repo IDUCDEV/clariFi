@@ -18,7 +18,9 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   String? selectedCategoryId;
   String? selectedAccountId;
   DateTimeRange? selectedDateRange;
+
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -28,6 +30,24 @@ class _TransactionsListViewState extends State<TransactionsListView> {
       await vm.loadTransactions();
       await vm.loadCategories(selectedType ?? 'expense');
     });
+
+    // 🔹 Scroll infinito: carga más al llegar al final
+    _scrollController.addListener(() {
+      final vm = context.read<TransactionViewModel>();
+      if (_scrollController.position.pixels >=
+              _scrollController.position.maxScrollExtent - 200 &&
+          !vm.isLoadingMore &&
+          !vm.isLoading) {
+        vm.loadMoreTransactions();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _clearAllFilters(TransactionViewModel vm) {
@@ -65,7 +85,7 @@ class _TransactionsListViewState extends State<TransactionsListView> {
       ),
       body: Column(
         children: [
-          // 🔍 Barra de búsqueda elegante
+          // 🔍 Barra de búsqueda
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Container(
@@ -107,7 +127,7 @@ class _TransactionsListViewState extends State<TransactionsListView> {
 
           const SizedBox(height: 6),
 
-          // 🔹 FILTROS en scroll horizontal
+          // 🔹 Filtros
           SizedBox(
             height: 50,
             child: ListView(
@@ -215,37 +235,65 @@ class _TransactionsListViewState extends State<TransactionsListView> {
             ),
           ),
 
-          // 🔹 LISTA DE TRANSACCIONES
+          // 🔹 Lista con scroll infinito + pull-to-refresh
           Expanded(
-            child: vm.isLoading
+            child: vm.isLoading && vm.transactions.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : vm.errorMessage != null
                     ? Center(child: Text(vm.errorMessage!))
-                    : vm.transactions.isEmpty
-                        ? const Center(child: Text('No hay transacciones'))
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: vm.transactions.length,
-                            itemBuilder: (context, index) {
-                              final item = vm.transactions[index];
-                              return TransactionItem(
-                                title: [
-                                  if (item.note != null &&
-                                      item.note!.isNotEmpty)
-                                    item.note!,
-                                  if (item.categoryName != null &&
-                                      item.categoryName!.isNotEmpty)
-                                    item.categoryName!,
-                                ].join(' / '),
-                                account:
-                                    item.accountName ?? 'Cuenta desconocida',
-                                date: item.date,
-                                amount: item.amount,
-                                type: item.type,
-                                onTap: () {},
-                              );
-                            },
-                          ),
+                    : RefreshIndicator(
+                        color: AppColors.primary,
+                        displacement: 40,
+                        onRefresh: () async => await vm.refreshTransactions(),
+                        child: vm.transactions.isEmpty
+                            ? ListView(
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                children: const [
+                                  SizedBox(height: 200),
+                                  Center(
+                                      child:
+                                          Text('No hay transacciones aún')),
+                                ],
+                              )
+                            : ListView.builder(
+                                controller: _scrollController,
+                                padding: const EdgeInsets.all(16),
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                itemCount: vm.transactions.length +
+                                    (vm.isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index < vm.transactions.length) {
+                                    final item = vm.transactions[index];
+                                    return TransactionItem(
+                                      title: [
+                                        if (item.note != null &&
+                                            item.note!.isNotEmpty)
+                                          item.note!,
+                                        if (item.categoryName != null &&
+                                            item.categoryName!.isNotEmpty)
+                                          item.categoryName!,
+                                      ].join(' / '),
+                                      account: item.accountName ??
+                                          'Cuenta desconocida',
+                                      date: item.date,
+                                      amount: item.amount,
+                                      type: item.type,
+                                      onTap: () {},
+                                    );
+                                  } else {
+                                    return const Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 24),
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                      ),
           ),
         ],
       ),

@@ -9,28 +9,28 @@ class SupabaseTransactionRepository implements TransactionRepository {
 
   String? get _currentUserId => _supabase.auth.currentUser?.id;
 
-  @override
-  Future<List<TransactionModel>> getTransactions() async {
-    try {
-      final userId = _currentUserId;
-      if (userId == null) throw Exception('Usuario no autenticado');
+@override
+Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20}) async {
+  try {
+    final userId = _currentUserId;
+    if (userId == null) throw Exception('Usuario no autenticado');
 
-      final response = await _supabase
-          .from('transactions')
-          .select('*, accounts(name), categories(name)')
-          .eq('user_id', userId)
-          .order('date', ascending: false);
+    final response = await _supabase
+        .from('transactions')
+        .select('*, accounts(name), categories(name)')
+        .eq('user_id', userId)
+        .order('date', ascending: false)
+        .range(offset, offset + limit - 1);
 
-      print('✅ [Repo] Transacciones cargadas: ${response.length}');
-
-      return (response as List)
-          .map((json) => TransactionModel.fromJson(json))
-          .toList();
-    } catch (e) {
-      print('🔴 [Repo] Error al obtener transacciones: $e');
-      throw Exception('Error al obtener transacciones: $e');
-    }
+    print('✅ [Repo] Transacciones cargadas: ${response.length} (offset: $offset)');
+    return (response as List)
+        .map((json) => TransactionModel.fromJson(json))
+        .toList();
+  } catch (e) {
+    throw Exception('Error al obtener transacciones: $e');
   }
+}
+
 
   @override
   Future<void> createTransaction(TransactionModel transaction) async {
