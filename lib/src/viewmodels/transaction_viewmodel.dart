@@ -27,6 +27,10 @@ class TransactionViewModel extends ChangeNotifier {
 
     try {
       _transactions = await _repository.getTransactions();
+     
+      for (var t in _transactions) {
+      print('💰 ${t.note ?? t.categoryName} | Cuenta: ${t.accountName}');
+    }
     } catch (e) {
       _errorMessage = e.toString();
     } finally {

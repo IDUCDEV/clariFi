@@ -1,10 +1,8 @@
-
-// Based on the 'transactions' table
 class TransactionModel {
   final String id;
   final String userId;
   final String accountId;
-  final String type;
+  final String type; // 'income' o 'expense'
   final double amount;
   final DateTime date;
   final String? categoryId;
@@ -14,6 +12,9 @@ class TransactionModel {
   final Map<String, dynamic>? metadata;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  final String? accountName;
+  final String? categoryName;
 
   TransactionModel({
     required this.id,
@@ -29,6 +30,8 @@ class TransactionModel {
     this.metadata,
     this.createdAt,
     this.updatedAt,
+    this.accountName,
+    this.categoryName,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -46,6 +49,9 @@ class TransactionModel {
       metadata: json['metadata'] != null ? Map<String, dynamic>.from(json['metadata']) : null,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      // 🧩 Aquí vienen los nombres desde Supabase JOIN
+      accountName: (json['accounts'] is Map) ? json['accounts']['name'] : null,
+      categoryName: (json['categories'] is Map) ? json['categories']['name'] : null,
     );
   }
 

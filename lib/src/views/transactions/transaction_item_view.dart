@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:clarifi_app/src/colors/colors.dart';
+import 'package:intl/intl.dart';
 
 class TransactionItem extends StatelessWidget {
   final String title;
   final String account;
-  final String time;
+  final DateTime date;
   final double amount;
+  final String type; // 'income' o 'expense'
   final VoidCallback? onTap;
 
   const TransactionItem({
     super.key,
     required this.title,
     required this.account,
-    required this.time,
+    required this.date,
     required this.amount,
+    required this.type,
     this.onTap,
   });
 
-   @override
+  @override
   Widget build(BuildContext context) {
-    final isNegative = amount < 0;
+    final isExpense = type == 'expense';
+    final color = isExpense ? Colors.red : Colors.green;
+    final icon = isExpense ? Icons.arrow_downward : Icons.arrow_upward;
+    final sign = isExpense ? '-' : '+';
+    final formattedDate = DateFormat('d MMM').format(date);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -38,33 +45,48 @@ class TransactionItem extends StatelessWidget {
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // 🧾 Info izquierda
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black)),
-                Text(account,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
-              ],
+            // Icono
+            Container(
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+
+            // Info principal
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    account,
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ],
+              ),
             ),
 
-            // 💵 Monto derecha
+            // Monto y fecha
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  (isNegative ? '-' : '+') + '\$${amount.abs().toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isNegative ? Colors.red : Colors.green,
-                  ),
+                  '$sign\$${amount.abs().toStringAsFixed(2)}',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: color),
                 ),
-                Text(time,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                Text(
+                  formattedDate,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
               ],
             ),
           ],

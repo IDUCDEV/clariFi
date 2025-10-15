@@ -192,18 +192,21 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                       padding: const EdgeInsets.all(16),
                       itemCount: viewModel.transactions.length,
                       itemBuilder: (context, index) {
-                        final item = viewModel.transactions[index];
-                        return TransactionItem(
-                          title: item.note ?? 'Sin descripción',
-                          account: item.accountId,
-                          time:
-                              '${item.date.hour.toString().padLeft(2, '0')}:${item.date.minute.toString().padLeft(2, '0')}',
-                          amount: item.amount,
-                          onTap: () {
-                            // Aquí podrías navegar a editar
-                          },
-                        );
-                      },
+  final item = viewModel.transactions[index];
+  return TransactionItem(
+    title: [
+  if (item.note != null && item.note!.isNotEmpty) item.note!,
+  if (item.categoryName != null && item.categoryName!.isNotEmpty) item.categoryName!,
+].join(' / '),
+    account: item.accountName ?? 'Cuenta desconocida',
+    date: item.date,
+    amount: item.amount,
+    type: item.type,
+    onTap: () {
+      // Navegar a detalle o edición
+    },
+  );
+},
                     ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,

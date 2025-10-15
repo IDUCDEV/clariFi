@@ -16,16 +16,16 @@ class SupabaseTransactionRepository implements TransactionRepository {
       if (userId == null) throw Exception('Usuario no autenticado');
 
       final response = await _supabase
-          .from('transactions')
-          .select()
-          .eq('user_id', userId)
-          .order('date', ascending: false);
+  .from('transactions')
+  .select('*, accounts(name), categories(name)')
+  .eq('user_id', userId)
+  .order('date', ascending: false);
 
-      print('✅ [Repo] Transacciones cargadas: ${response.length}');
+print('✅ [Repo] Transacciones cargadas: ${response.length}');
 
-      return (response as List)
-          .map((json) => TransactionModel.fromJson(json))
-          .toList();
+return (response as List)
+    .map((json) => TransactionModel.fromJson(json))
+    .toList();
     } catch (e) {
       throw Exception('Error al obtener transacciones: $e');
     }
