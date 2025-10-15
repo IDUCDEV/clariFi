@@ -9,14 +9,21 @@ class TransactionViewModel extends ChangeNotifier {
   final TransactionRepository _repository;
 
   List<CategoryModel> categories = [];
-
-  TransactionViewModel(this._repository, this.categoryRepository);
-
-  List<TransactionModel> _transactions = [];
+  List<TransactionModel> _allTransactions = [];
+  List<TransactionModel> _filteredTransactions = [];
+  //List<TransactionModel> _transactions = [];
   bool _isLoading = false;
   String? _errorMessage;
 
-  List<TransactionModel> get transactions => _transactions;
+   // 🔹 Filtros actuales
+  String? _selectedCategoryId;
+  String? _selectedAccountId;
+  String? _selectedType; // "income" o "expense"
+  DateTimeRange? _selectedDateRange;
+
+  TransactionViewModel(this._repository, this.categoryRepository);
+
+  List<TransactionModel> get transactions => _filteredTransactions;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -26,9 +33,10 @@ class TransactionViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _transactions = await _repository.getTransactions();
+       _allTransactions = await _repository.getTransactions();
+      _filteredTransactions = List.from(_allTransactions);
      
-      for (var t in _transactions) {
+      for (var t in _allTransactions) {
       print('💰 ${t.note ?? t.categoryName} | Cuenta: ${t.accountName}');
     }
     } catch (e) {
@@ -38,7 +46,45 @@ class TransactionViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+ // 🔹 Aplicar filtros
+  void applyFilters({
+    String? categoryId,
+    String? accountId,
+    String? type,
+    DateTimeRange? dateRange,
+  }) {
+    _selectedCategoryId = categoryId;
+    _selectedAccountId = accountId;
+    _selectedType = type;
+    _selectedDateRange = dateRange;
 
+    _filteredTransactions = _allTransactions.where((t) {
+      bool matches = true;
+
+      if (categoryId != null && t.categoryId != categoryId) matches = false;
+      if (accountId != null && t.accountId != accountId) matches = false;
+      if (type != null && t.type != type) matches = false;
+
+      if (dateRange != null) {
+        matches = matches &&
+            t.date.isAfter(dateRange.start.subtract(const Duration(days: 1))) &&
+            t.date.isBefore(dateRange.end.add(const Duration(days: 1)));
+      }
+
+      return matches;
+    }).toList();
+
+    notifyListeners();
+  }
+
+  void clearFilters() {
+    _selectedCategoryId = null;
+    _selectedAccountId = null;
+    _selectedType = null;
+    _selectedDateRange = null;
+    _filteredTransactions = List.from(_allTransactions);
+    notifyListeners();
+  }
 
  Future<void> addTransaction(TransactionModel transaction) async {
   try {
@@ -77,7 +123,7 @@ class TransactionViewModel extends ChangeNotifier {
   Future<void> deleteTransaction(String id) async {
     try {
       await _repository.deleteTransaction(id);
-      _transactions.removeWhere((t) => t.id == id);
+      _allTransactions.removeWhere((t) => t.id == id);
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
