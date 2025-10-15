@@ -184,7 +184,6 @@ Future<void> refreshTransactions() async {
   notifyListeners();
   await loadTransactions();
 }
-
   // ============================================================
   // CRUD
   // ============================================================
@@ -251,4 +250,11 @@ Future<void> refreshTransactions() async {
       notifyListeners();
     }
   }
+  TransactionModel? getTransactionById(String id) {
+  try {
+    return _allTransactions.firstWhere((t) => t.id == id);
+  } catch (e) {
+    return null;
+  }
+}
 }

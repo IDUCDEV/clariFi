@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart'; // 👈 para formatear fechas
 
 class NewTransactionView extends StatefulWidget {
-  final String type; // 👈 expense | income
+  final String type; // 👈 'expense' o 'income'
 
   const NewTransactionView({super.key, required this.type});
 
@@ -17,13 +18,13 @@ class NewTransactionView extends StatefulWidget {
 }
 
 class _NewTransactionScreenState extends State<NewTransactionView> {
-  bool isRecurring = false;
-  String frequency = "Diario";
   String? selectedCategoryId;
   String? selectedAccountId;
   DateTime? selectedDate = DateTime.now();
   final TextEditingController noteController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
+
+  static const int maxNoteLength = 20; // 👈 límite de caracteres
 
   @override
   void initState() {
@@ -32,15 +33,35 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
       context.read<TransactionViewModel>().loadCategories(widget.type);
       context.read<AccountViewModel>().loadAccounts();
     });
+    noteController.addListener(() {
+      if (noteController.text.length > maxNoteLength) {
+        noteController.text =
+            noteController.text.substring(0, maxNoteLength);
+        noteController.selection = TextSelection.fromPosition(
+          TextPosition(offset: noteController.text.length),
+        );
+      }
+      setState(() {}); // 👈 actualiza el contador
+    });
+  }
+
+  @override
+  void dispose() {
+    noteController.dispose();
+    amountController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<TransactionViewModel>();
     final vmAccounts = context.watch<AccountViewModel>();
-
     final isExpense = widget.type == 'expense';
     final title = isExpense ? 'Nuevo Gasto' : 'Nuevo Ingreso';
+
+    final formattedDate = selectedDate != null
+        ? DateFormat('dd/MM/yyyy').format(selectedDate!)
+        : 'Seleccionar fecha';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -79,20 +100,17 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
             if (vm.isLoading)
               const Center(child: CircularProgressIndicator())
             else
-            _buildDropdown(
+              _buildDropdown(
                 'Categoría',
                 selectedCategoryId,
                 vm.categories
                     .map((c) => {'id': c.id, 'name': c.name})
                     .toList(),
                 (value) {
-                  
-                  final selected =
-                      vm.categories.firstWhere((a) => a.id == value);
-                      setState(() => selectedCategoryId = selected.id);
-                  print('✅ Cuenta seleccionada: ${selected.name} (${selectedCategoryId})');
+                  setState(() => selectedCategoryId = value);
                 },
               ),
+
             const SizedBox(height: 12),
 
             // 🏦 Cuenta
@@ -106,11 +124,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                     .map((a) => {'id': a.id, 'name': a.name})
                     .toList(),
                 (value) {
-                  
-                  final selected =
-                      vmAccounts.accounts.firstWhere((a) => a.id == value);
-                      setState(() => selectedAccountId = selected.id);
-                  print('✅ Cuenta seleccionada: ${selected.name} (${selectedAccountId})');
+                  setState(() => selectedAccountId = value);
                 },
               ),
 
@@ -119,44 +133,62 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
             // 📅 Fecha
             GestureDetector(
               onTap: _pickDate,
-              child: _buildDropdown(
-                'Fecha',
-                selectedDate != null
-                    ? "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}"
-                    : 'Seleccionar fecha',
-                const [],
-                null,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 📝 Nota
-            TextField(
-              controller: noteController,
-              decoration: InputDecoration(
-                hintText: 'Añadir una nota',
-                filled: true,
-                fillColor: AppColors.lightPurple,
-                border: OutlineInputBorder(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                decoration: BoxDecoration(
+                  color: AppColors.lightPurple,
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(formattedDate,
+                        style: const TextStyle(color: AppColors.onSecondary)),
+                    const Icon(Icons.calendar_today_outlined,
+                        color: AppColors.primary),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
 
-            _buildReceiptSection(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            // 🔁 Recurrente
-            SwitchListTile(
-              title: const Text("Transacción recurrente"),
-              value: isRecurring,
-              onChanged: (val) => setState(() => isRecurring = val),
-              activeColor: AppColors.primary,
+            // 📝 Nota con límite de caracteres
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                TextField(
+                  controller: noteController,
+                  maxLength: maxNoteLength,
+                  decoration: InputDecoration(
+                    hintText: 'Añadir una nota (opcional)',
+                    counterText: '', // 👈 ocultamos el contador por defecto
+                    filled: true,
+                    fillColor: AppColors.lightPurple,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 12,
+                  bottom: 8,
+                  child: Text(
+                    '${noteController.text.length}/$maxNoteLength',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: noteController.text.length >= maxNoteLength
+                          ? Colors.red
+                          : Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            if (isRecurring) _buildFrequencySection(),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 20),
 
             // 💾 Guardar
             SizedBox(
@@ -166,13 +198,11 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
-                onPressed: () async {
-                  await _saveTransaction(context);
-                },
-                child:
-                    const Text('Guardar', style: TextStyle(fontSize: 18)),
+                onPressed: () async => await _saveTransaction(context),
+                child: const Text('Guardar', style: TextStyle(fontSize: 18)),
               ),
             ),
           ],
@@ -181,9 +211,12 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     );
   }
 
-  // 🔽 Dropdown genérico que usa ID internamente
-  Widget _buildDropdown(String hint, String? selectedId,
-      List<Map<String, String>> items, ValueChanged<String?>? onChanged) {
+  Widget _buildDropdown(
+    String hint,
+    String? selectedId,
+    List<Map<String, String>> items,
+    ValueChanged<String?>? onChanged,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -207,88 +240,34 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     );
   }
 
-  Widget _buildReceiptSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.lightPurple,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppColors.primary.withOpacity(0.3),
-            style: BorderStyle.solid),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.receipt_long_outlined,
-              color: AppColors.primary, size: 40),
-          const SizedBox(height: 8),
-          const Text("Agregar un recibo",
-              style: TextStyle(color: AppColors.onSecondary)),
-          const Text("Tome una foto de su recibo",
-              style: TextStyle(color: AppColors.gray, fontSize: 13)),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {},
-            icon: const Icon(Icons.camera_alt_outlined),
-            label: const Text("Tomar Foto"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFrequencySection() {
-    return Column(
-      children: [
-        Wrap(
-          spacing: 8,
-          children: ["Diario", "Semanalmente", "Mensual", "Anualmente"]
-              .map((option) {
-            return ChoiceChip(
-              label: Text(option),
-              selected: frequency == option,
-              onSelected: (_) => setState(() => frequency = option),
-              selectedColor: AppColors.primary,
-              labelStyle: TextStyle(
-                  color: frequency == option
-                      ? Colors.white
-                      : AppColors.onSecondary),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
   Future<void> _pickDate() async {
+    final today = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate ?? DateTime.now(),
+      initialDate: selectedDate ?? today,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: today, // 👈 no se pueden fechas futuras
+      helpText: 'Seleccionar fecha de la transacción',
+      cancelText: 'Cancelar',
+      confirmText: 'Aceptar',
     );
-    if (picked != null) setState(() => selectedDate = picked);
+
+    if (picked != null) {
+      setState(() => selectedDate = picked);
+    }
   }
 
   Future<void> _saveTransaction(BuildContext context) async {
     final vm = context.read<TransactionViewModel>();
-    final vmAccounts = context.read<AccountViewModel>();
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user == null) {
-      print('❌ No hay usuario autenticado');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error: Usuario no autenticado')),
       );
       return;
     }
 
-    // ✅ Validación de selección
     if (selectedAccountId == null || selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Seleccione cuenta y categoría')),
@@ -297,12 +276,18 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     }
 
     final amount = double.tryParse(amountController.text) ?? 0;
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingrese un monto válido')),
+      );
+      return;
+    }
 
     final transaction = TransactionModel(
       id: const Uuid().v4(),
       userId: user.id,
-      accountId: selectedAccountId as String,
-      categoryId: selectedCategoryId as String,
+      accountId: selectedAccountId!,
+      categoryId: selectedCategoryId!,
       type: widget.type,
       amount: amount,
       date: selectedDate ?? DateTime.now(),
@@ -312,8 +297,6 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
       updatedAt: DateTime.now(),
     );
 
-    print('💾 Insertando en Supabase -> ${transaction.toJson()}');
-
     try {
       await vm.addTransaction(transaction);
       if (!mounted) return;
@@ -322,7 +305,6 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
       );
       Navigator.pop(context);
     } catch (e) {
-      print('🔴 Error al guardar transacción: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al guardar: $e')),

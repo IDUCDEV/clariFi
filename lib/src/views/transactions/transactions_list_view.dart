@@ -4,6 +4,7 @@ import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'transaction_item_view.dart';
 import 'new_transaction_view.dart';
+import 'package:go_router/go_router.dart';
 import 'transfer_view.dart';
 import 'edit_transaction_view.dart'; // 👈 Nueva importación
 
@@ -267,8 +268,8 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                             type: item.type,
                             // 👇 NUEVO: tap abre detalle/edición
                             onTap: () async {
-                              final updated = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => EditTransactionView(transaction: item)));
-if (updated == true) await vm.loadTransactions();
+                              final updated = context.push('/transactions/edit/${item.id}');
+                              if (updated == true) await vm.loadTransactions();
                             },
                           );
                         } else {
@@ -452,11 +453,10 @@ if (updated == true) await vm.loadTransactions();
             context,
             MaterialPageRoute(builder: (_) => const TransferScreen()),
           );
+        } else if (type == 'income') {
+          context.push('/transactions/add/income');
         } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => NewTransactionView(type: type)),
-          );
+          context.push('/transactions/add/expense');
         }
       },
       child: Container(

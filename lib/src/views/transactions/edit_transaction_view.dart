@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:clarifi_app/src/models/transaction.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/colors/colors.dart';
@@ -40,9 +41,8 @@ class _EditTransactionViewState extends State<EditTransactionView> {
   }
 
   void _showMessage(String msg, {Color color = AppColors.primary}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   Future<void> _saveChanges() async {
@@ -59,29 +59,9 @@ class _EditTransactionViewState extends State<EditTransactionView> {
     Navigator.pop(context);
   }
 
-  Future<void> _deleteTransaction() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar transacción?'),
-        content: const Text('Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
+  void _navigateToDelete() {
+    context.push('/transactions/delete/${widget.transaction.id}');
 
-    if (confirm == true) {
-      final viewModel = context.read<TransactionViewModel>();
-      await viewModel.deleteTransaction(widget.transaction.id!);
-      _showMessage('🗑️ Transacción eliminada', color: Colors.red);
-      Navigator.pop(context);
-    }
   }
 
   Future<void> _pickDate() async {
@@ -89,7 +69,7 @@ class _EditTransactionViewState extends State<EditTransactionView> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      lastDate: DateTime.now(), // Solo fechas pasadas o actuales
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
@@ -117,9 +97,19 @@ class _EditTransactionViewState extends State<EditTransactionView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _textField('Descripción', _descriptionController),
-            _textField('Cantidad', _amountController, keyboardType: TextInputType.number),
-            _dropdownField('Cuenta', widget.transaction.accountName ?? 'Seleccionar cuenta'),
-            _dropdownField('Categoría', widget.transaction.categoryName ?? 'Seleccionar categoría'),
+            _textField(
+              'Cantidad',
+              _amountController,
+              keyboardType: TextInputType.number,
+            ),
+            _dropdownField(
+              'Cuenta',
+              widget.transaction.accountName ?? 'Seleccionar cuenta',
+            ),
+            _dropdownField(
+              'Categoría',
+              widget.transaction.categoryName ?? 'Seleccionar categoría',
+            ),
             _dateField('Fecha', _selectedDate),
             const SizedBox(height: 24),
             _recurringSection(),
@@ -130,7 +120,9 @@ class _EditTransactionViewState extends State<EditTransactionView> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
                 onPressed: _saveChanges,
                 child: const Text('Guardar cambios'),
@@ -139,7 +131,7 @@ class _EditTransactionViewState extends State<EditTransactionView> {
             const SizedBox(height: 16),
             Center(
               child: TextButton(
-                onPressed: _deleteTransaction,
+                onPressed: _navigateToDelete,
                 child: const Text(
                   'Eliminar transacción',
                   style: TextStyle(color: Colors.red),
@@ -152,14 +144,19 @@ class _EditTransactionViewState extends State<EditTransactionView> {
     );
   }
 
-  Widget _textField(String label, TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text}) {
+  Widget _textField(
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLength: label == 'Notas (opcional)' ? 20 : null,
         decoration: InputDecoration(
+          counterText: '',
           labelText: label,
           filled: true,
           fillColor: AppColors.lightPurple,
@@ -187,10 +184,7 @@ class _EditTransactionViewState extends State<EditTransactionView> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(value),
-            const Icon(Icons.arrow_drop_down),
-          ],
+          children: [Text(value), const Icon(Icons.arrow_drop_down)],
         ),
       ),
     );
@@ -233,7 +227,10 @@ class _EditTransactionViewState extends State<EditTransactionView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Transacción recurrente', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Transacción recurrente',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           SwitchListTile(
             title: const Text('Esta es una transacción recurrente.'),
@@ -252,7 +249,8 @@ class _EditTransactionViewState extends State<EditTransactionView> {
                 ),
                 RadioListTile(
                   title: const Text(
-                      'Aplicar cambios a esta y a todas las transacciones futuras'),
+                    'Aplicar cambios a esta y a todas las transacciones futuras',
+                  ),
                   value: true,
                   groupValue: true,
                   onChanged: (_) {},
