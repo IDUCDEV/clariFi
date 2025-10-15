@@ -16,38 +16,40 @@ class SupabaseTransactionRepository implements TransactionRepository {
       if (userId == null) throw Exception('Usuario no autenticado');
 
       final response = await _supabase
-  .from('transactions')
-  .select('*, accounts(name), categories(name)')
-  .eq('user_id', userId)
-  .order('date', ascending: false);
+          .from('transactions')
+          .select('*, accounts(name), categories(name)')
+          .eq('user_id', userId)
+          .order('date', ascending: false);
 
-print('✅ [Repo] Transacciones cargadas: ${response.length}');
+      print('✅ [Repo] Transacciones cargadas: ${response.length}');
 
-return (response as List)
-    .map((json) => TransactionModel.fromJson(json))
-    .toList();
+      return (response as List)
+          .map((json) => TransactionModel.fromJson(json))
+          .toList();
     } catch (e) {
+      print('🔴 [Repo] Error al obtener transacciones: $e');
       throw Exception('Error al obtener transacciones: $e');
     }
   }
-
 
   @override
   Future<void> createTransaction(TransactionModel transaction) async {
     try {
       final userId = _currentUserId;
-      print('🟣 [Repo] Usuario actual: $userId');
       if (userId == null) throw Exception('Usuario no autenticado');
-       
+
       final data = transaction.toJson()..remove('id');
       data['user_id'] = userId;
-      print('🟣 [Repo] Datos a insertar: $data');
+
+      print('🟣 [Repo] Creando transacción: $data');
+
       final response = await _supabase
-      .from('transactions')
-      .insert(data)
-      .select()
-      .single();
-      print('🟣 [Repo] Respuesta de Supabase: $response');
+          .from('transactions')
+          .insert(data)
+          .select()
+          .single();
+
+      print('✅ [Repo] Transacción creada: $response');
     } catch (e) {
       print('🔴 [Repo] Error al crear transacción: $e');
       throw Exception('Error al crear transacción: $e');
@@ -65,7 +67,10 @@ return (response as List)
           .update(transaction.toJson())
           .eq('id', transaction.id)
           .eq('user_id', userId);
+
+      print('✅ [Repo] Transacción actualizada: ${transaction.id}');
     } catch (e) {
+      print('🔴 [Repo] Error al actualizar transacción: $e');
       throw Exception('Error al actualizar transacción: $e');
     }
   }
@@ -81,7 +86,10 @@ return (response as List)
           .delete()
           .eq('id', transactionId)
           .eq('user_id', userId);
+
+      print('🗑️ [Repo] Transacción eliminada: $transactionId');
     } catch (e) {
+      print('🔴 [Repo] Error al eliminar transacción: $e');
       throw Exception('Error al eliminar transacción: $e');
     }
   }
@@ -94,14 +102,16 @@ return (response as List)
 
       final response = await _supabase
           .from('transactions')
-          .select()
+          .select('*, accounts(name), categories(name)')
           .eq('id', id)
           .eq('user_id', userId)
           .maybeSingle();
 
       if (response == null) return null;
+
       return TransactionModel.fromJson(response);
     } catch (e) {
+      print('🔴 [Repo] Error al obtener transacción por ID: $e');
       throw Exception('Error al obtener transacción: $e');
     }
   }

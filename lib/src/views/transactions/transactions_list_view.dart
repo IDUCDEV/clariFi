@@ -18,6 +18,7 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   String? selectedCategoryId;
   String? selectedAccountId;
   DateTimeRange? selectedDateRange;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -30,9 +31,8 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   }
 
   void _clearAllFilters(TransactionViewModel vm) {
+    _searchController.clear();
     vm.clearFilters();
-    vm.loadTransactions();
-    vm.loadCategories('expense');
     setState(() {
       selectedType = null;
       selectedCategoryId = null;
@@ -65,119 +65,153 @@ class _TransactionsListViewState extends State<TransactionsListView> {
       ),
       body: Column(
         children: [
-          // 🔹 FILTROS EN SCROLL HORIZONTAL
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            color: Colors.grey.shade100,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: [
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: selectedType == null
-                        ? 'Tipo'
-                        : selectedType == 'income'
-                            ? 'Ingreso'
-                            : 'Gasto',
-                    icon: Icons.swap_vert_circle,
-                    color: selectedType == null
-                        ? Colors.grey.shade300
-                        : AppColors.primary.withOpacity(0.2),
-                    onTap: () async {
-                      final type = await _showTypeSelector();
-                      if (type != null) {
-                        setState(() {
-                          selectedType = type;
-                          selectedCategoryId = null;
-                        });
-                        await vm.loadCategories(type);
-                        vm.applyFilters(
-                          type: type,
-                          categoryId: selectedCategoryId,
-                          accountId: selectedAccountId,
-                          dateRange: selectedDateRange,
-                        );
-                      }
-                    },
+          // 🔍 Barra de búsqueda elegante
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.shade300,
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: selectedCategoryId == null
-                        ? 'Categoría'
-                        : vm.categories
-                                .firstWhere(
-                                    (c) => c.id == selectedCategoryId,
-                                    orElse: () => vm.categories.first)
-                                .name,
-                    icon: Icons.category_rounded,
-                    onTap: () async {
-                      final category = await _showCategorySelector(vm);
-                      if (category != null) {
-                        setState(() => selectedCategoryId = category);
-                        vm.applyFilters(
-                          type: selectedType,
-                          categoryId: category,
-                          accountId: selectedAccountId,
-                          dateRange: selectedDateRange,
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: selectedAccountId ?? 'Cuenta',
-                    icon: Icons.account_balance_wallet_outlined,
-                    onTap: () async {
-                      final account = await _showAccountSelector();
-                      if (account != null) {
-                        setState(() => selectedAccountId = account);
-                        vm.applyFilters(
-                          type: selectedType,
-                          categoryId: selectedCategoryId,
-                          accountId: account,
-                          dateRange: selectedDateRange,
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: selectedDateRange == null
-                        ? 'Fecha'
-                        : '${selectedDateRange!.start.day}/${selectedDateRange!.start.month} - ${selectedDateRange!.end.day}/${selectedDateRange!.end.month}',
-                    icon: Icons.date_range,
-                    onTap: () async {
-                      final range = await showDateRangePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        builder: (context, child) => Theme(
-                          data: ThemeData.light().copyWith(
-                            colorScheme: const ColorScheme.light(
-                              primary: AppColors.primary,
-                              onPrimary: Colors.white,
-                            ),
-                          ),
-                          child: child!,
-                        ),
-                      );
-                      if (range != null) {
-                        setState(() => selectedDateRange = range);
-                        vm.applyFilters(
-                          type: selectedType,
-                          categoryId: selectedCategoryId,
-                          accountId: selectedAccountId,
-                          dateRange: range,
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
                 ],
               ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (query) => vm.setSearchQuery(query),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por nota, categoría o cuenta...',
+                  prefixIcon:
+                      const Icon(Icons.search, color: AppColors.primary),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close,
+                              color: Colors.grey, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            vm.setSearchQuery('');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // 🔹 FILTROS en scroll horizontal
+          SizedBox(
+            height: 50,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _buildFilterChip(
+                  label: selectedType == null
+                      ? 'Tipo'
+                      : selectedType == 'income'
+                          ? 'Ingreso'
+                          : 'Gasto',
+                  icon: Icons.swap_vert_circle,
+                  color: selectedType == null
+                      ? Colors.grey.shade200
+                      : AppColors.primary.withOpacity(0.15),
+                  onTap: () async {
+                    final type = await _showTypeSelector();
+                    if (type != null) {
+                      setState(() {
+                        selectedType = type;
+                        selectedCategoryId = null;
+                      });
+                      await vm.loadCategories(type);
+                      vm.applyFilters(
+                        type: type,
+                        categoryId: selectedCategoryId,
+                        accountId: selectedAccountId,
+                        dateRange: selectedDateRange,
+                      );
+                    }
+                  },
+                ),
+                _buildFilterChip(
+                  label: selectedCategoryId == null
+                      ? 'Categoría'
+                      : vm.categories
+                          .firstWhere(
+                            (c) => c.id == selectedCategoryId,
+                            orElse: () => vm.categories.first,
+                          )
+                          .name,
+                  icon: Icons.category_rounded,
+                  onTap: () async {
+                    final category = await _showCategorySelector(vm);
+                    if (category != null) {
+                      setState(() => selectedCategoryId = category);
+                      vm.applyFilters(
+                        type: selectedType,
+                        categoryId: category,
+                        accountId: selectedAccountId,
+                        dateRange: selectedDateRange,
+                      );
+                    }
+                  },
+                ),
+                _buildFilterChip(
+                  label: selectedAccountId ?? 'Cuenta',
+                  icon: Icons.account_balance_wallet_outlined,
+                  onTap: () async {
+                    final account = await _showAccountSelector();
+                    if (account != null) {
+                      setState(() => selectedAccountId = account);
+                      vm.applyFilters(
+                        type: selectedType,
+                        categoryId: selectedCategoryId,
+                        accountId: account,
+                        dateRange: selectedDateRange,
+                      );
+                    }
+                  },
+                ),
+                _buildFilterChip(
+                  label: selectedDateRange == null
+                      ? 'Fecha'
+                      : '${selectedDateRange!.start.day}/${selectedDateRange!.start.month} - ${selectedDateRange!.end.day}/${selectedDateRange!.end.month}',
+                  icon: Icons.date_range,
+                  onTap: () async {
+                    final range = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                      builder: (context, child) => Theme(
+                        data: ThemeData.light().copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: AppColors.primary,
+                            onPrimary: Colors.white,
+                          ),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                    if (range != null) {
+                      setState(() => selectedDateRange = range);
+                      vm.applyFilters(
+                        type: selectedType,
+                        categoryId: selectedCategoryId,
+                        accountId: selectedAccountId,
+                        dateRange: range,
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
           ),
 
@@ -188,7 +222,7 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                 : vm.errorMessage != null
                     ? Center(child: Text(vm.errorMessage!))
                     : vm.transactions.isEmpty
-                        ? const Center(child: Text('No hay transacciones aún'))
+                        ? const Center(child: Text('No hay transacciones'))
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: vm.transactions.length,
@@ -196,7 +230,8 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                               final item = vm.transactions[index];
                               return TransactionItem(
                                 title: [
-                                  if (item.note != null && item.note!.isNotEmpty)
+                                  if (item.note != null &&
+                                      item.note!.isNotEmpty)
                                     item.note!,
                                   if (item.categoryName != null &&
                                       item.categoryName!.isNotEmpty)
@@ -222,30 +257,35 @@ class _TransactionsListViewState extends State<TransactionsListView> {
     );
   }
 
-  // 🔸 CHIP DE FILTRO ESTILIZADO
+  // ============================================================
+  // Widgets auxiliares
+  // ============================================================
+
   Widget _buildFilterChip({
     required String label,
     required IconData icon,
     Color? color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Chip(
-        avatar: Icon(icon, size: 18, color: AppColors.primary),
-        label: Text(label),
-        backgroundColor: color ?? Colors.white,
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.black12),
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Chip(
+          avatar: Icon(icon, size: 18, color: AppColors.primary),
+          label: Text(label),
+          backgroundColor: color ?? Colors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.black12),
+          ),
         ),
       ),
     );
   }
 
-  // 🔸 SELECTORES MODALES
   Future<String?> _showTypeSelector() async {
     return await showModalBottomSheet<String>(
       context: context,
@@ -260,13 +300,14 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   }
 
   Future<String?> _showCategorySelector(TransactionViewModel vm) async {
-    final items = vm.categories
-        .map((c) => {'value': c.id, 'label': c.name})
-        .toList();
+    final items =
+        vm.categories.map((c) => {'value': c.id, 'label': c.name}).toList();
     return await showModalBottomSheet<String>(
       context: context,
-      builder: (context) =>
-          _buildBottomSelector(title: 'Seleccionar categoría', items: items),
+      builder: (context) => _buildBottomSelector(
+        title: 'Seleccionar categoría',
+        items: items,
+      ),
     );
   }
 
@@ -292,11 +333,9 @@ class _TransactionsListViewState extends State<TransactionsListView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-          ),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Divider(),
           ...items.map(
             (item) => ListTile(
@@ -310,7 +349,6 @@ class _TransactionsListViewState extends State<TransactionsListView> {
     );
   }
 
-  // 🔸 MODAL PARA NUEVAS TRANSACCIONES
   void _showAddOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
