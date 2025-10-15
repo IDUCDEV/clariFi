@@ -1,4 +1,4 @@
-import '../models/account.dart';
+import '../../models/account.dart';
 
 /// Repository para operaciones de cuentas
 /// Define el contrato que debe cumplir cualquier implementación

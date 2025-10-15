@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/account.dart';
+import '../../models/account.dart';
 import 'account_repository.dart';
 
 /// Implementación del repositorio de cuentas usando Supabase
