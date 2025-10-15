@@ -1,10 +1,11 @@
-import 'package:clarifi_app/src/colors/colors.dart';
-import 'package:provider/provider.dart';
-import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:clarifi_app/src/colors/colors.dart';
+import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'transaction_item_view.dart';
 import 'new_transaction_view.dart';
 import 'transfer_view.dart';
+import 'edit_transaction_view.dart'; // 👈 Nueva importación
 
 class TransactionsListView extends StatefulWidget {
   const TransactionsListView({super.key});
@@ -25,13 +26,14 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() async {
       final vm = context.read<TransactionViewModel>();
       await vm.loadTransactions();
       await vm.loadCategories(selectedType ?? 'expense');
     });
 
-    // 🔹 Scroll infinito: carga más al llegar al final
+    // 🔹 Detectar scroll al final para scroll infinito
     _scrollController.addListener(() {
       final vm = context.read<TransactionViewModel>();
       if (_scrollController.position.pixels >=
@@ -41,13 +43,6 @@ class _TransactionsListViewState extends State<TransactionsListView> {
         vm.loadMoreTransactions();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _searchController.dispose();
-    super.dispose();
   }
 
   void _clearAllFilters(TransactionViewModel vm) {
@@ -105,12 +100,17 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                 onChanged: (query) => vm.setSearchQuery(query),
                 decoration: InputDecoration(
                   hintText: 'Buscar por nota, categoría o cuenta...',
-                  prefixIcon:
-                      const Icon(Icons.search, color: AppColors.primary),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: AppColors.primary,
+                  ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.close,
-                              color: Colors.grey, size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.grey,
+                            size: 20,
+                          ),
                           onPressed: () {
                             _searchController.clear();
                             vm.setSearchQuery('');
@@ -118,8 +118,10 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
             ),
@@ -127,7 +129,7 @@ class _TransactionsListViewState extends State<TransactionsListView> {
 
           const SizedBox(height: 6),
 
-          // 🔹 Filtros
+          // 🔹 Filtros horizontales
           SizedBox(
             height: 50,
             child: ListView(
@@ -138,8 +140,8 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                   label: selectedType == null
                       ? 'Tipo'
                       : selectedType == 'income'
-                          ? 'Ingreso'
-                          : 'Gasto',
+                      ? 'Ingreso'
+                      : 'Gasto',
                   icon: Icons.swap_vert_circle,
                   color: selectedType == null
                       ? Colors.grey.shade200
@@ -165,11 +167,11 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                   label: selectedCategoryId == null
                       ? 'Categoría'
                       : vm.categories
-                          .firstWhere(
-                            (c) => c.id == selectedCategoryId,
-                            orElse: () => vm.categories.first,
-                          )
-                          .name,
+                            .firstWhere(
+                              (c) => c.id == selectedCategoryId,
+                              orElse: () => vm.categories.first,
+                            )
+                            .name,
                   icon: Icons.category_rounded,
                   onTap: () async {
                     final category = await _showCategorySelector(vm);
@@ -235,65 +237,49 @@ class _TransactionsListViewState extends State<TransactionsListView> {
             ),
           ),
 
-          // 🔹 Lista con scroll infinito + pull-to-refresh
+          // 🔹 Lista de transacciones (scroll infinito + refresh)
           Expanded(
             child: vm.isLoading && vm.transactions.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : vm.errorMessage != null
-                    ? Center(child: Text(vm.errorMessage!))
-                    : RefreshIndicator(
-                        color: AppColors.primary,
-                        displacement: 40,
-                        onRefresh: () async => await vm.refreshTransactions(),
-                        child: vm.transactions.isEmpty
-                            ? ListView(
-                                physics:
-                                    const AlwaysScrollableScrollPhysics(),
-                                children: const [
-                                  SizedBox(height: 200),
-                                  Center(
-                                      child:
-                                          Text('No hay transacciones aún')),
-                                ],
-                              )
-                            : ListView.builder(
-                                controller: _scrollController,
-                                padding: const EdgeInsets.all(16),
-                                physics:
-                                    const AlwaysScrollableScrollPhysics(),
-                                itemCount: vm.transactions.length +
-                                    (vm.isLoadingMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index < vm.transactions.length) {
-                                    final item = vm.transactions[index];
-                                    return TransactionItem(
-                                      title: [
-                                        if (item.note != null &&
-                                            item.note!.isNotEmpty)
-                                          item.note!,
-                                        if (item.categoryName != null &&
-                                            item.categoryName!.isNotEmpty)
-                                          item.categoryName!,
-                                      ].join(' / '),
-                                      account: item.accountName ??
-                                          'Cuenta desconocida',
-                                      date: item.date,
-                                      amount: item.amount,
-                                      type: item.type,
-                                      onTap: () {},
-                                    );
-                                  } else {
-                                    return const Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 24),
-                                      child: Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                      ),
+                ? Center(child: Text(vm.errorMessage!))
+                : RefreshIndicator(
+                    onRefresh: vm.loadTransactions,
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount:
+                          vm.transactions.length + (vm.isLoadingMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index < vm.transactions.length) {
+                          final item = vm.transactions[index];
+                          return TransactionItem(
+                            title: [
+                              if (item.note != null && item.note!.isNotEmpty)
+                                item.note!,
+                              if (item.categoryName != null &&
+                                  item.categoryName!.isNotEmpty)
+                                item.categoryName!,
+                            ].join(' / '),
+                            account: item.accountName ?? 'Cuenta desconocida',
+                            date: item.date,
+                            amount: item.amount,
+                            type: item.type,
+                            // 👇 NUEVO: tap abre detalle/edición
+                            onTap: () async {
+                              final updated = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => EditTransactionView(transaction: item)));
+if (updated == true) await vm.loadTransactions();
+                            },
+                          );
+                        } else {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -348,14 +334,13 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   }
 
   Future<String?> _showCategorySelector(TransactionViewModel vm) async {
-    final items =
-        vm.categories.map((c) => {'value': c.id, 'label': c.name}).toList();
+    final items = vm.categories
+        .map((c) => {'value': c.id, 'label': c.name})
+        .toList();
     return await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => _buildBottomSelector(
-        title: 'Seleccionar categoría',
-        items: items,
-      ),
+      builder: (context) =>
+          _buildBottomSelector(title: 'Seleccionar categoría', items: items),
     );
   }
 
@@ -381,9 +366,10 @@ class _TransactionsListViewState extends State<TransactionsListView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 10),
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const Divider(),
           ...items.map(
             (item) => ListTile(
@@ -421,14 +407,30 @@ class _TransactionsListViewState extends State<TransactionsListView> {
               const Text(
                 'Agregar nuevo',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 16),
-              _buildOption(context, Icons.arrow_downward, 'Nuevo gasto', 'expense'),
-              _buildOption(context, Icons.arrow_upward, 'Nuevo ingreso', 'income'),
-              _buildOption(context, Icons.swap_horiz, 'Transferencia', 'transfer'),
+              _buildOption(
+                context,
+                Icons.arrow_downward,
+                'Nuevo gasto',
+                'expense',
+              ),
+              _buildOption(
+                context,
+                Icons.arrow_upward,
+                'Nuevo ingreso',
+                'income',
+              ),
+              _buildOption(
+                context,
+                Icons.swap_horiz,
+                'Transferencia',
+                'transfer',
+              ),
             ],
           ),
         );
@@ -437,7 +439,11 @@ class _TransactionsListViewState extends State<TransactionsListView> {
   }
 
   Widget _buildOption(
-      BuildContext context, IconData icon, String text, String type) {
+    BuildContext context,
+    IconData icon,
+    String text,
+    String type,
+  ) {
     return InkWell(
       onTap: () {
         Navigator.pop(context);
@@ -449,9 +455,7 @@ class _TransactionsListViewState extends State<TransactionsListView> {
         } else {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => NewTransactionView(type: type),
-            ),
+            MaterialPageRoute(builder: (_) => NewTransactionView(type: type)),
           );
         }
       },
