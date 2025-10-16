@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  final SupabaseClient supabase = Supabase.instance.client;
-  SupabaseService();
+  final SupabaseClient supabase;
+  SupabaseService(this.supabase);
   /*
     authentication methods
   */
@@ -53,7 +53,8 @@ class SupabaseService {
       if (!isEmailExists) {
         return false;
       }
-      final response = await supabase.auth.resetPasswordForEmail(
+      
+      await supabase.auth.resetPasswordForEmail(
         email,
         redirectTo: 'clarifi://reset-password',
       );

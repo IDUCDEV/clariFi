@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/account.dart';
-import '../repositories/account_repository.dart';
+import '../repositories/account/account_repository.dart';
 
 /// ViewModel para gestionar el estado y lógica de negocio de cuentas
 /// Implementa ChangeNotifier para notificar cambios a la UI

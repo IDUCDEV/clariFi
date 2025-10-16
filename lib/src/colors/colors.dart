@@ -27,7 +27,7 @@ class AppColors {
 
   // Colores personalizados de la paleta
   static const Color lavender = Color(0xFFCDB4DB);
-  static const Color blush = Color(0xFFFFC8DD);
+  static const Color blush = Color(0xFFF5EDFC);
   static const Color rose = Color(0xFFFFAFCC);
   static const Color skyBlue = Color(0xFFBDE0FE);
   static const Color azure = Color(0xFFA2D2FF);

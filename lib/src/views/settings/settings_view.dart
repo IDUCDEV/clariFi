@@ -81,14 +81,14 @@ class SettingsView extends StatelessWidget {
             icon: Icons.notifications_active_outlined,
             title: 'Alertas',
             subtitle: 'Configurar alertas de presupuesto',
-            onTap: () => _showDevelopmentMessage(context),
+            onTap: () => GoRouter.of(context).push('/alerstBudgets'),
           ),
           _buildSettingsTile(
             context,
             icon: Icons.description_outlined,
             title: 'Plantillas',
             subtitle: 'Administrar plantillas de presupuesto',
-            onTap: () => _showDevelopmentMessage(context),
+            onTap: () => GoRouter.of(context).push('/templatesBudgets'),
           ),
           
           const Divider(height: 32),
