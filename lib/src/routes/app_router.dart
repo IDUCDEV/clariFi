@@ -3,6 +3,11 @@ import 'package:clarifi_app/src/views/auth/change_password.dart';
 import 'package:clarifi_app/src/views/auth/login_view.dart';
 import 'package:clarifi_app/src/views/auth/recovery_password.dart';
 import 'package:clarifi_app/src/views/auth/signup_view.dart';
+import 'package:clarifi_app/src/views/budgets/budget_alert_screen.dart';
+import 'package:clarifi_app/src/views/budgets/budget_template_screen.dart';
+import 'package:clarifi_app/src/views/budgets/create_budget.dart';
+import 'package:clarifi_app/src/views/budgets/dashboard_budgets.dart';
+import 'package:clarifi_app/src/views/budgets/edit_budget.dart';
 import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/home/accounts_view.dart';
 import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
@@ -10,7 +15,6 @@ import 'package:clarifi_app/src/views/transactions/transaction_form_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
 import 'package:clarifi_app/src/views/splashScreen/splash_screen.dart';
 import 'package:clarifi_app/src/views/navigation/main_navigation_view.dart';
-import 'package:clarifi_app/src/views/budgets/budgets_view.dart';
 import 'package:clarifi_app/src/views/transactions/transactions_view.dart';
 import 'package:clarifi_app/src/views/settings/settings_view.dart';
 import 'package:clarifi_app/src/views/visualization_reports/account_analysis.dart';
@@ -59,21 +63,6 @@ class AppRouter {
           builder: (context, state) => const ChangePassword(),
         ),
 
-        GoRoute(
-          path: '/month_detail/:monthIndex',
-          builder: (context, state) {
-            final monthIndexStr = state.pathParameters['monthIndex']!;
-            final monthIndex = int.parse(monthIndexStr);
-            return MonthDetailView(monthIndex: monthIndex, amount: 50);
-          },
-
-        ),
-        GoRoute(
-          name: 'account_analisys',
-          path: '/accountAnalysisView',
-          builder: (context, state) => const AccountAnalysisScreen(),
-        ),
-
         // ShellRoute para mantener NavigationBar visible
         ShellRoute(
           builder: (context, state, child) {
@@ -90,7 +79,7 @@ class AppRouter {
               name: 'budgets',
               path: '/budgets',
               pageBuilder: (context, state) =>
-                  NoTransitionPage(child: const BudgetsView()),
+                  NoTransitionPage(child: const DashboardBudgets()),
             ),
             GoRoute(
               name: 'transactions',
@@ -130,6 +119,30 @@ class AppRouter {
           name: 'transactionForm',
           path: '/transactions/new',
           builder: (context, state) => const TransactionFormView(),
+        ),
+        // Rutas de presupuestos - Budgets Module
+        GoRoute(
+          name: 'addBudget',
+          path: '/addBudget',
+          builder: (context, state) => const CreateBudget(),
+        ),
+        GoRoute(
+          name: 'editBudget',
+          path: '/editBudget/:budgetId',
+          builder: (context, state) {
+            final String? budgetId = state.pathParameters['budgetId'];
+            return EditBudget(budgetId: budgetId ?? '');
+          },
+        ),
+        GoRoute(
+          name: 'AlerstBudgets',
+          path: '/alerstBudgets',
+          builder: (context, state) => const BudgetAlertsScreen(),
+        ),
+        GoRoute(
+          name: 'TemplatesBudgets',
+          path: '/templatesBudgets',
+          builder: (context, state) => const BudgetTemplateScreen(),
         ),
       ],
       redirect: (context, state) {

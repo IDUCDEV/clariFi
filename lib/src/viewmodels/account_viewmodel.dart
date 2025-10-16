@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/account.dart';
-import '../repositories/account_repository.dart';
+import '../repositories/account/account_repository.dart';
 
 /// ViewModel para gestionar el estado y lógica de negocio de cuentas
 /// Implementa ChangeNotifier para notificar cambios a la UI
@@ -124,6 +124,37 @@ class AccountViewModel extends ChangeNotifier {
       
     } catch (e) {
       _setError('Error al eliminar cuenta: $e');
+      _setLoading(false);
+      return false;
+    }
+  }
+  
+  /// Transfiere el saldo de una cuenta a otra y luego elimina la cuenta origen
+  /// Retorna true si se completó exitosamente, false en caso contrario
+  Future<bool> transferBalanceAndDelete({
+    required String fromAccountId,
+    required String toAccountId,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    
+    try {
+      // Primero transferir el saldo
+      await _repository.transferBalance(
+        fromAccountId: fromAccountId,
+        toAccountId: toAccountId,
+      );
+      
+      // Luego eliminar la cuenta
+      await _repository.deleteAccount(fromAccountId);
+      
+      // Recargar la lista de cuentas
+      await loadAccounts();
+      
+      return true;
+      
+    } catch (e) {
+      _setError('Error al transferir saldo y eliminar cuenta: $e');
       _setLoading(false);
       return false;
     }

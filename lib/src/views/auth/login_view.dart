@@ -50,7 +50,7 @@ class _LoginViewState extends State<LoginView> {
         _emailCtl.clear();
         _passwordCtl.clear();
         // Navigate to dashboard after login
-        GoRouter.of(context).go('/dashboard');
+        GoRouter.of(context).go('/home');
       }else{
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

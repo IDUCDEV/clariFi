@@ -4,9 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/constants/account_constants.dart';
-import 'package:clarifi_app/src/widgets/form/custom_text_field.dart';
-import 'package:clarifi_app/src/widgets/form/custom_dropdown.dart';
-import 'package:clarifi_app/src/widgets/form/labeled_switch.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 
 /// Vista modal para crear una nueva cuenta
@@ -140,70 +137,50 @@ class CreateAccountView extends StatefulWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.black87),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [_buildHeader(context), _buildForm(context)],
+        title: const Text(
+          'Nueva cuenta',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
         ),
+        centerTitle: false,
       ),
+      body: _buildForm(context),
     );
   }
 
-  /// Construye el header del modal
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const Icon(Icons.close, color: Colors.black54),
-          ),
-          const SizedBox(width: 16),
-          const Text(
-            'Nueva cuenta',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Construye el formulario del modal
+  /// Construye el formulario
   Widget _buildForm(BuildContext context) {
-    return Flexible(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildNameField(),
-              const SizedBox(height: 16),
-              _buildAccountTypeDropdown(),
-              const SizedBox(height: 16),
-              _buildCurrencyDropdown(),
-              const SizedBox(height: 16),
-              _buildInitialBalanceField(),
-              const SizedBox(height: 16),
-              _buildDefaultAccountSwitch(),
-              const SizedBox(height: 24),
-              _buildSubmitButton(),
-            ],
-          ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildNameField(),
+            const SizedBox(height: 16),
+            _buildAccountTypeDropdown(),
+            const SizedBox(height: 16),
+            _buildCurrencyDropdown(),
+            const SizedBox(height: 16),
+            _buildInitialBalanceField(),
+            const SizedBox(height: 16),
+            _buildDefaultAccountSwitch(),
+            const SizedBox(height: 24),
+            _buildSubmitButton(),
+          ],
         ),
       ),
     );
@@ -211,79 +188,232 @@ class CreateAccountView extends StatefulWidget {
 
   /// Campo de nombre de cuenta
   Widget _buildNameField() {
-    return CustomTextField(
-      label: 'Nombre de cuenta',
-      hintText: 'p. ej. Ahorros Personales',
-      controller: _nameController,
-      validator: _validateName,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Nombre de cuenta',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _nameController,
+          decoration: InputDecoration(
+            hintText: 'p. ej., Ahorros Personales',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true,
+            fillColor: const Color(0xFFF5EEFD),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF984CE6), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          validator: _validateName,
+        ),
+      ],
     );
   }
 
   /// Dropdown de tipo de cuenta
   Widget _buildAccountTypeDropdown() {
-    return CustomDropdown<String>(
-      label: 'Tipo de cuenta',
-      hintText: 'Seleccionar tipo',
-      value: _selectedAccountType,
-      items: AccountConstants.accountTypes.map((type) {
-        return DropdownMenuItem<String>(
-          value: type.value,
-          child: Text(type.label),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          _selectedAccountType = newValue;
-        });
-      },
-      validator: _validateAccountType,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Tipo de cuenta',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedAccountType,
+          decoration: InputDecoration(
+            hintText: 'Dinero',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true,
+            fillColor: const Color(0xFFF5EEFD),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF984CE6), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          items: AccountConstants.accountTypes.map((type) {
+            return DropdownMenuItem<String>(
+              value: type.value,
+              child: Text(type.label),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedAccountType = newValue;
+            });
+          },
+          validator: _validateAccountType,
+        ),
+      ],
     );
   }
 
   /// Dropdown de divisa
   Widget _buildCurrencyDropdown() {
-    return CustomDropdown<String>(
-      label: 'Divisa',
-      hintText: 'USD - Dólar',
-      value: _selectedCurrency,
-      items: AccountConstants.currencies.map((currency) {
-        return DropdownMenuItem<String>(
-          value: currency.code,
-          child: Text(currency.label),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          _selectedCurrency = newValue;
-        });
-      },
-      validator: _validateCurrency,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Divisa',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedCurrency,
+          decoration: InputDecoration(
+            hintText: 'USD - US Dollar',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true,
+            fillColor: const Color(0xFFF5EEFD),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF984CE6), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          items: AccountConstants.currencies.map((currency) {
+            return DropdownMenuItem<String>(
+              value: currency.code,
+              child: Text(currency.label),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedCurrency = newValue;
+            });
+          },
+          validator: _validateCurrency,
+        ),
+      ],
     );
   }
 
   /// Campo de saldo inicial
   Widget _buildInitialBalanceField() {
-    return CustomTextField(
-      label: 'Saldo inicial (opcional)',
-      hintText: '\$ 0.00',
-      controller: _initialBalanceController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Saldo inicial (opcional)',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _initialBalanceController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+          ],
+          decoration: InputDecoration(
+            hintText: '\$ 0.00',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true,
+            fillColor: const Color(0xFFF5EEFD),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF984CE6), width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+        ),
       ],
     );
   }
 
   /// Switch de cuenta predeterminada
   Widget _buildDefaultAccountSwitch() {
-    return LabeledSwitch(
-      label: 'Establecer como cuenta predeterminada',
-      value: _isDefaultAccount,
-      onChanged: (value) {
-        setState(() {
-          _isDefaultAccount = value;
-        });
-      },
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Establecer como cuenta predeterminada',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        Switch(
+          value: _isDefaultAccount,
+          onChanged: (value) {
+            setState(() {
+              _isDefaultAccount = value;
+            });
+          },
+          activeColor: const Color(0xFF984CE6),
+        ),
+      ],
     );
   }
 
@@ -291,30 +421,36 @@ class CreateAccountView extends StatefulWidget {
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
-      height: 48,
+      height: 56,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleCreateAccount,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: const Color(0xFF984CE6),
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+          disabledBackgroundColor: const Color(0xFF984CE6).withOpacity(0.6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: _isLoading
             ? const SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
-                  color: Colors.white,
                   strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
             : const Text(
                 'Crear una cuenta',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
       ),
     );
   }
 }
+
