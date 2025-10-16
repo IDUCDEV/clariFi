@@ -7,6 +7,8 @@ class AppColors {
   static const Color secondary = Color(0xFF03DAC6);
   static const Color success = Color.fromARGB(255, 0, 255, 106);
   static const Color lightPurple = Color(0xFFF2E9FF);
+  static const Color mediumPurple = Color(0xFF994CE6);
+  
 
   // Colores de fondo
   static const Color background = Color(0xFFFFFFFF);

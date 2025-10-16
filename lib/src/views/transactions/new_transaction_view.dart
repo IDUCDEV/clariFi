@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart'; // 👈 para formatear fechas
+import 'package:intl/intl.dart';
 
 class NewTransactionView extends StatefulWidget {
-  final String type; // 👈 'expense' o 'income'
+  final String type; // 'expense' o 'income'
 
   const NewTransactionView({super.key, required this.type});
 
@@ -20,11 +20,19 @@ class NewTransactionView extends StatefulWidget {
 class _NewTransactionScreenState extends State<NewTransactionView> {
   String? selectedCategoryId;
   String? selectedAccountId;
+  String? selectedBudgetId;
   DateTime? selectedDate = DateTime.now();
   final TextEditingController noteController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
-  static const int maxNoteLength = 20; // 👈 límite de caracteres
+  static const int maxNoteLength = 20;
+
+  final List<Map<String, String>> fakeBudgets = [
+    {'id': '1', 'name': 'Hogar'},
+    {'id': '2', 'name': 'Transporte'},
+    {'id': '3', 'name': 'Alimentación'},
+    {'id': '4', 'name': 'Entretenimiento'},
+  ];
 
   @override
   void initState() {
@@ -35,13 +43,12 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     });
     noteController.addListener(() {
       if (noteController.text.length > maxNoteLength) {
-        noteController.text =
-            noteController.text.substring(0, maxNoteLength);
+        noteController.text = noteController.text.substring(0, maxNoteLength);
         noteController.selection = TextSelection.fromPosition(
           TextPosition(offset: noteController.text.length),
         );
       }
-      setState(() {}); // 👈 actualiza el contador
+      setState(() {});
     });
   }
 
@@ -70,31 +77,58 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
           icon: const Icon(Icons.close, color: AppColors.onSecondary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(title, style: const TextStyle(color: AppColors.onSecondary)),
+        title: Text(
+          '$title',
+          style: const TextStyle(
+            color: AppColors.onSecondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 💰 Monto
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: AppColors.onSecondary,
-              ),
-              decoration: const InputDecoration(
-                hintText: "\$0.00",
-                border: InputBorder.none,
-              ),
+            const SizedBox(height: 8),
+
+            // 💰 Monto centrado
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '\$',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.onSecondary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  width: 160,
+                  child: TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSecondary,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: "0.00",
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 20),
 
             // 🏷️ Categoría
             if (vm.isLoading)
@@ -106,9 +140,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                 vm.categories
                     .map((c) => {'id': c.id, 'name': c.name})
                     .toList(),
-                (value) {
-                  setState(() => selectedCategoryId = value);
-                },
+                (value) => setState(() => selectedCategoryId = value),
               ),
 
             const SizedBox(height: 12),
@@ -123,9 +155,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                 vmAccounts.accounts
                     .map((a) => {'id': a.id, 'name': a.name})
                     .toList(),
-                (value) {
-                  setState(() => selectedAccountId = value);
-                },
+                (value) => setState(() => selectedAccountId = value),
               ),
 
             const SizedBox(height: 12),
@@ -154,7 +184,17 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
             const SizedBox(height: 12),
 
-            // 📝 Nota con límite de caracteres
+            // 📊 Asociar presupuesto
+            _buildDropdown(
+              'Asociar a un presupuesto',
+              selectedBudgetId,
+              fakeBudgets,
+              (value) => setState(() => selectedBudgetId = value),
+            ),
+
+            const SizedBox(height: 12),
+
+            // 📝 Nota
             Stack(
               alignment: Alignment.bottomRight,
               children: [
@@ -163,7 +203,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                   maxLength: maxNoteLength,
                   decoration: InputDecoration(
                     hintText: 'Añadir una nota (opcional)',
-                    counterText: '', // 👈 ocultamos el contador por defecto
+                    counterText: '',
                     filled: true,
                     fillColor: AppColors.lightPurple,
                     border: OutlineInputBorder(
@@ -188,21 +228,37 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
               ],
             ),
 
+            const SizedBox(height: 16),
+
+            // 🔁 Transacción recurrente (comentado)
+            /*
+            SwitchListTile(
+              title: const Text("Transacción recurrente"),
+              value: false,
+              onChanged: (val) {},
+              activeColor: AppColors.primary,
+            ),
+            */
+
             const SizedBox(height: 20),
 
-            // 💾 Guardar
+            // 💾 Botón Guardar
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.background,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
                 onPressed: () async => await _saveTransaction(context),
-                child: const Text('Guardar', style: TextStyle(fontSize: 18)),
+                child: const Text(
+                  'Guardar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],
@@ -246,7 +302,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
       context: context,
       initialDate: selectedDate ?? today,
       firstDate: DateTime(2000),
-      lastDate: today, // 👈 no se pueden fechas futuras
+      lastDate: today,
       helpText: 'Seleccionar fecha de la transacción',
       cancelText: 'Cancelar',
       confirmText: 'Aceptar',

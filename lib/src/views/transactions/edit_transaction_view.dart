@@ -112,14 +112,15 @@ class _EditTransactionViewState extends State<EditTransactionView> {
             ),
             _dateField('Fecha', _selectedDate),
             const SizedBox(height: 24),
-            _recurringSection(),
-            const SizedBox(height: 24),
+            //_recurringSection(),
+            //const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.background,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -217,49 +218,49 @@ class _EditTransactionViewState extends State<EditTransactionView> {
     );
   }
 
-  Widget _recurringSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.lightPurple.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Transacción recurrente',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            title: const Text('Esta es una transacción recurrente.'),
-            value: isRecurring,
-            onChanged: (value) => setState(() => isRecurring = value),
-            activeColor: AppColors.primary,
-          ),
-          if (isRecurring)
-            Column(
-              children: [
-                RadioListTile(
-                  title: const Text('Aplicar cambios sólo a esta transacción'),
-                  value: false,
-                  groupValue: true,
-                  onChanged: (_) {},
-                ),
-                RadioListTile(
-                  title: const Text(
-                    'Aplicar cambios a esta y a todas las transacciones futuras',
-                  ),
-                  value: true,
-                  groupValue: true,
-                  onChanged: (_) {},
-                  activeColor: AppColors.primary,
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
+//   Widget _recurringSection() {
+//     return Container(
+//       padding: const EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: AppColors.lightPurple.withOpacity(0.5),
+//         borderRadius: BorderRadius.circular(12),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           const Text(
+//             'Transacción recurrente',
+//             style: TextStyle(fontWeight: FontWeight.bold),
+//           ),
+//           const SizedBox(height: 8),
+//           SwitchListTile(
+//             title: const Text('Esta es una transacción recurrente.'),
+//             value: isRecurring,
+//             onChanged: (value) => setState(() => isRecurring = value),
+//             activeColor: AppColors.primary,
+//           ),
+//           if (isRecurring)
+//             Column(
+//               children: [
+//                 RadioListTile(
+//                   title: const Text('Aplicar cambios sólo a esta transacción'),
+//                   value: false,
+//                   groupValue: true,
+//                   onChanged: (_) {},
+//                 ),
+//                 RadioListTile(
+//                   title: const Text(
+//                     'Aplicar cambios a esta y a todas las transacciones futuras',
+//                   ),
+//                   value: true,
+//                   groupValue: true,
+//                   onChanged: (_) {},
+//                   activeColor: AppColors.primary,
+//                 ),
+//               ],
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+ }
