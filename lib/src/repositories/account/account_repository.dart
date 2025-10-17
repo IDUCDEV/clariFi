@@ -37,4 +37,10 @@ abstract class AccountRepository {
     required String fromAccountId,
     required String toAccountId,
   });
+
+  Future<void> transferAmount({
+  required String fromAccountId,
+  required String toAccountId,
+  required double amount,
+  });
 }

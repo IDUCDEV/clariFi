@@ -233,4 +233,31 @@ class AccountViewModel extends ChangeNotifier {
     // Limpiar recursos si es necesario
     super.dispose();
   }
+  Future<bool> transferAmount({
+  required String fromAccountId,
+  required String toAccountId,
+  required double amount,
+}) async {
+  _setLoading(true);
+  _clearError();
+
+  try {
+    await _repository.transferAmount(
+      fromAccountId: fromAccountId,
+      toAccountId: toAccountId,
+      amount: amount,
+    );
+
+    // Recargar las cuentas después de la transferencia
+    await loadAccounts();
+
+    return true;
+  } catch (e) {
+    _setError('Error al transferir: $e');
+    return false;
+  } finally {
+    _setLoading(false);
+  }
+}
+
 }

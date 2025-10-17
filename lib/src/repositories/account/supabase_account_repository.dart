@@ -235,4 +235,49 @@ class SupabaseAccountRepository implements AccountRepository {
       print('Advertencia: No se pudieron actualizar cuentas predeterminadas: $e');
     }
   }
+  @override
+Future<void> transferAmount({
+  required String fromAccountId,
+  required String toAccountId,
+  required double amount,
+}) async {
+  try {
+    final userId = _currentUserId;
+    if (userId == null) {
+      throw Exception('Usuario no autenticado');
+    }
+
+    // Obtener ambas cuentas
+    final fromAccount = await getAccountById(fromAccountId);
+    final toAccount = await getAccountById(toAccountId);
+
+    if (fromAccount == null) {
+      throw Exception('Cuenta origen no encontrada');
+    }
+
+    if (toAccount == null) {
+      throw Exception('Cuenta destino no encontrada');
+    }
+
+    // Validar fondos suficientes
+    if (fromAccount.balance < amount) {
+      throw Exception('Fondos insuficientes en la cuenta origen.');
+    }
+
+    // Calcular nuevos balances
+    final newFromBalance = fromAccount.balance - amount;
+    final newToBalance = toAccount.balance + amount;
+
+    // Actualizar ambas cuentas en Supabase
+    await _supabase.from('accounts').update({
+      'balance': newFromBalance,
+    }).eq('id', fromAccountId).eq('user_id', userId);
+
+    await _supabase.from('accounts').update({
+      'balance': newToBalance,
+    }).eq('id', toAccountId).eq('user_id', userId);
+  } catch (e) {
+    throw Exception('Error al transferir monto: $e');
+    }
+  }
 }

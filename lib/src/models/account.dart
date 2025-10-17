@@ -45,4 +45,26 @@ class AccountModel {
       'created_at': createdAt,
     };
   }
+  
+  AccountModel copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? type,
+    String? currency,
+    double? balance,
+    bool? isDefault,
+    String? createdAt,
+  }) {
+    return AccountModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      currency: currency ?? this.currency,
+      balance: balance ?? this.balance,
+      isDefault: isDefault ?? this.isDefault,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

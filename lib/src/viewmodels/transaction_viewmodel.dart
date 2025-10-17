@@ -54,7 +54,6 @@ class TransactionViewModel extends ChangeNotifier {
       _allTransactions = data;
       _filteredTransactions = List.from(_allTransactions);
       _page = 1;
-
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -85,7 +84,6 @@ class TransactionViewModel extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = e.toString();
-      print('⚠️ Error cargando más transacciones: $e');
     } finally {
       _isLoadingMore = false;
       notifyListeners();
@@ -187,17 +185,9 @@ Future<void> refreshTransactions() async {
     try {
       _isLoading = true;
       notifyListeners();
-
-      print('🟣 [VM] Intentando guardar transacción...');
-      print('🟢 [VM] Datos enviados: ${transaction.toJson()}');
-
       await _repository.createTransaction(transaction);
       await loadTransactions();
-
-      print('✅ [VM] Transacción creada correctamente');
     } catch (e, stack) {
-      print('🔴 [VM] Error al crear transacción: $e');
-      print('📜 Stacktrace: $stack');
       _errorMessage = e.toString();
     } finally {
       _isLoading = false;
@@ -235,12 +225,9 @@ Future<void> refreshTransactions() async {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
-
       categories = await categoryRepository.fetchAllCategories(type: type);
-      print('📝 Categorías cargadas: ${categories.length}');
     } catch (e) {
       _errorMessage = e.toString();
-      print('⚠️ Error cargando categorías: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
