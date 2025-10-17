@@ -1,4 +1,4 @@
-import '../models/transaction.dart';
+import '../../models/transaction.dart';
 
 abstract class TransactionRepository {
   Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20});

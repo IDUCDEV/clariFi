@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
-import '../repositories/transaction_repository.dart';
+import '../repositories/transaction/transaction_repository.dart';
 import '../models/category.dart';
-import '../repositories/category_repository.dart';
+import '../repositories/category/category_repository.dart';
 
 class TransactionViewModel extends ChangeNotifier {
   final CategoryRepository categoryRepository;
@@ -55,12 +55,8 @@ class TransactionViewModel extends ChangeNotifier {
       _filteredTransactions = List.from(_allTransactions);
       _page = 1;
 
-      for (var t in _allTransactions) {
-        print('💰 ${t.note ?? t.categoryName} | Cuenta: ${t.accountName}');
-      }
     } catch (e) {
       _errorMessage = e.toString();
-      print('⚠️ Error cargando transacciones: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/transaction.dart';
+import '../../models/transaction.dart';
 import 'transaction_repository.dart';
 
 class SupabaseTransactionRepository implements TransactionRepository {
@@ -21,8 +21,6 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
         .eq('user_id', userId)
         .order('date', ascending: false)
         .range(offset, offset + limit - 1);
-
-    print('✅ [Repo] Transacciones cargadas: ${response.length} (offset: $offset)');
     return (response as List)
         .map((json) => TransactionModel.fromJson(json))
         .toList();
@@ -40,18 +38,12 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
 
       final data = transaction.toJson()..remove('id');
       data['user_id'] = userId;
-
-      print('🟣 [Repo] Creando transacción: $data');
-
       final response = await _supabase
           .from('transactions')
           .insert(data)
           .select()
           .single();
-
-      print('✅ [Repo] Transacción creada: $response');
     } catch (e) {
-      print('🔴 [Repo] Error al crear transacción: $e');
       throw Exception('Error al crear transacción: $e');
     }
   }
@@ -67,10 +59,7 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
           .update(transaction.toJson())
           .eq('id', transaction.id)
           .eq('user_id', userId);
-
-      print('✅ [Repo] Transacción actualizada: ${transaction.id}');
     } catch (e) {
-      print('🔴 [Repo] Error al actualizar transacción: $e');
       throw Exception('Error al actualizar transacción: $e');
     }
   }
@@ -86,10 +75,7 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
           .delete()
           .eq('id', transactionId)
           .eq('user_id', userId);
-
-      print('🗑️ [Repo] Transacción eliminada: $transactionId');
     } catch (e) {
-      print('🔴 [Repo] Error al eliminar transacción: $e');
       throw Exception('Error al eliminar transacción: $e');
     }
   }
@@ -111,7 +97,6 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
 
       return TransactionModel.fromJson(response);
     } catch (e) {
-      print('🔴 [Repo] Error al obtener transacción por ID: $e');
       throw Exception('Error al obtener transacción: $e');
     }
   }

@@ -4,10 +4,8 @@ import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'transaction_item_view.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
-import 'new_transaction_view.dart';
 import 'package:go_router/go_router.dart';
 import 'transfer_view.dart';
-import 'edit_transaction_view.dart'; // 👈 Nueva importación
 
 class TransactionsListView extends StatefulWidget {
   const TransactionsListView({super.key});
