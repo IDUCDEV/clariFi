@@ -32,8 +32,9 @@ class ApiConfig {
   /// - Open Exchange Rates: https://openexchangerates.org (requiere key)
   /// - Fixer.io: https://fixer.io (requiere key)
   /// - Currency API: https://currencyapi.com (requiere key)
-  static const String exchangeRateApiBaseUrl = 
-      'https://api.exchangerate-api.com/v4';
+  // Default external API base URL (you provided this endpoint). Keep disabled
+  // by default via `useExternalExchangeApi` to avoid unsafe direct calls.
+  static const String exchangeRateApiBaseUrl = 'http://exchangesrateapi.com/api';
   
   /// Endpoint para obtener tasas de cambio
   /// {currency} será reemplazado por el código de moneda (ej: USD, EUR)
