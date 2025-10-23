@@ -18,6 +18,7 @@ class SupabaseBudgetRepository {
     DateTime startDate,
     DateTime endDate,
     double? alertThreshold,
+    String accountId,
   ) async {
     final userId = _currentUserId;
 
@@ -31,12 +32,14 @@ class SupabaseBudgetRepository {
         amount: amount,
         period: period,
         userId: userId,
-        categoryId:
-            null, // Siempre null por ahora hasta implementar selección de categoría
+        categoryId: categoryId, // Siempre null por ahora hasta implementar selección de categoría
         startDate: startDate,
         endDate: endDate,
         alertThreshold: alertThreshold,
+        accountId: accountId,
       );
+
+      
 
       final data = budget.toJson();
       // Excluir campos generados por la DB
@@ -44,6 +47,7 @@ class SupabaseBudgetRepository {
       data.remove('created_at');
 
       await _supabaseClient.from('budgets').insert(data);
+      
     } on PostgrestException catch (e) {
       throw Exception('Error creando presupuesto: ${e.message}');
     } catch (e) {

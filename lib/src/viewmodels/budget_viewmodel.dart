@@ -60,14 +60,13 @@ class BudgetViewModel extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
     required double? alertThreshold,
+    required String accountId,
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Aquí iría la llamada al repositorio para registrar el presupuesto
-      // Ejemplo:
       await _repository.createBudget(
         name,
         amount,
@@ -76,6 +75,7 @@ class BudgetViewModel extends ChangeNotifier {
         startDate,
         endDate,
         alertThreshold,
+        accountId,
       );
       // Actualizar la lista de presupuestos después de registrar
       await loadBudgets();
@@ -181,16 +181,9 @@ class BudgetViewModel extends ChangeNotifier {
       _isLoading = true;
       _error = null;
       notifyListeners();
-
-      print('DEBUG: BudgetViewModel - Llamando fetchAllCategories con type: $type');
       _categories = await _categoryRepository.fetchAllCategories(type: type);
-      print('DEBUG: BudgetViewModel - Categorías cargadas: ${_categories.length}');
-      for (var category in _categories) {
-        print('DEBUG: BudgetViewModel - Categoría: ${category.name} (${category.type})');
-      }
     } catch (e) {
       _error = e.toString();
-      print('DEBUG: BudgetViewModel - Error en loadCategories: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

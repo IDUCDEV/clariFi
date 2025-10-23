@@ -77,6 +77,12 @@ class _CreateBudgetState extends State<CreateBudget> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCategories();
+    });
+  }
+
+  Future<void> _loadCategories() async {
     final AccountViewModel accountViewModel = Provider.of<AccountViewModel>(
       context,
       listen: false,
@@ -85,15 +91,7 @@ class _CreateBudgetState extends State<CreateBudget> {
       context,
       listen: false,
     );
-    debugPrint('DEBUG: Llamando loadCategories("all") en initState');
-    budgetViewModel.loadCategories('expense').then((_) {
-      debugPrint('DEBUG: loadCategories completado. Número de categorías: ${budgetViewModel.categories.length}');
-      for (var category in budgetViewModel.categories) {
-        debugPrint('DEBUG: Categoría - ID: ${category.id}, Nombre: ${category.name}, Tipo: ${category.type}');
-      }
-    }).catchError((error) {
-      debugPrint('DEBUG: Error en loadCategories: $error');
-    });
+    budgetViewModel.loadCategories('expense');
     accountViewModel.loadAccounts();
   }
 
@@ -208,7 +206,6 @@ class _CreateBudgetState extends State<CreateBudget> {
                     const SizedBox(height: 16.0),
                     Consumer<BudgetViewModel>(
                       builder: (context, budgetViewModel, child) {
-                        debugPrint('DEBUG: Consumer rebuild. Categorías disponibles: ${budgetViewModel.categories.length}');
                         if (budgetViewModel.isLoading) {
                           return TextFormField(
                             enabled: false,
@@ -264,7 +261,6 @@ class _CreateBudgetState extends State<CreateBudget> {
                           },
                           items: budgetViewModel.categories
                               .map<DropdownMenuItem<String>>((category) {
-                                debugPrint('DEBUG: Agregando categoría al dropdown: ${category.name} (ID: ${category.id})');
                                 return DropdownMenuItem<String>(
                                   value: category.id,
                                   child: Text(category.name),
@@ -408,6 +404,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                         startDate: startDate!.toUtc(),
                         endDate: endDate!.toUtc(),
                         alertThreshold: _selectedThreshold,
+                        accountId: _accountIdBudgetController.text,
                       );
 
                       if (mounted) {
