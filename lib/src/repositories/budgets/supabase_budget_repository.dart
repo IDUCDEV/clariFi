@@ -133,7 +133,8 @@ class SupabaseBudgetRepository {
       amount: amount,
       period: period,
       userId: userId,
-      categoryId:null, // Siempre null por ahora hasta implementar selección de categoría
+      categoryId:
+          null, // Siempre null por ahora hasta implementar selección de categoría
       startDate: startDate,
       endDate: endDate,
       alertThreshold: alertThreshold,
@@ -151,29 +152,51 @@ class SupabaseBudgetRepository {
   }
 
   Future<num> getTotalBudgetAmount() async {
-      final userId = _currentUserId;
+    final userId = _currentUserId;
 
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      try {
-        final response = await _supabaseClient
-            .from('budgets')
-            .select('amount')
-            .eq('user_id', userId);
-
-        final amounts = (response as List)
-            .map((item) => item['amount'] as num? ?? 0)
-            .toList();
-
-        final total = amounts.fold<num>(0, (prev, element) => prev + element);
-
-        return total;
-      } on PostgrestException catch (e) {
-        throw Exception('Error al obtener el total del presupuesto: ${e.message}');
-      } catch (e) {
-        throw Exception('Error al obtener el total del presupuesto: $e');
-      }
+    if (userId == null) {
+      throw Exception('User not authenticated');
     }
+
+    try {
+      final response = await _supabaseClient
+          .from('budgets')
+          .select('amount')
+          .eq('user_id', userId);
+
+      final amounts = (response as List)
+          .map((item) => item['amount'] as num? ?? 0)
+          .toList();
+
+      final total = amounts.fold<num>(0, (prev, element) => prev + element);
+
+      return total;
+    } on PostgrestException catch (e) {
+      throw Exception(
+        'Error al obtener el total del presupuesto: ${e.message}',
+      );
+    } catch (e) {
+      throw Exception('Error al obtener el total del presupuesto: $e');
+    }
+  }
+
+  // have i accounts?  @override
+  Future<bool> hasAccounts() async {
+    try {
+      final userId = _currentUserId;
+      if (userId == null) {
+        return false;
+      }
+
+      final response = await _supabaseClient
+          .from('accounts')
+          .select('id')
+          .eq('user_id', userId);
+
+      return (response as List).isNotEmpty;
+    } catch (e) {
+      // Si hay error, asumimos que no tiene cuentas
+      return false;
+    }
+  }
 }

@@ -1,11 +1,14 @@
 import 'package:clarifi_app/src/models/budget.dart';
+import 'package:clarifi_app/src/models/category.dart';
 import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
+import 'package:clarifi_app/src/repositories/category/category_repository.dart';
 import 'package:flutter/material.dart';
 
 class BudgetViewModel extends ChangeNotifier {
   final SupabaseBudgetRepository _repository;
+  final CategoryRepository _categoryRepository; // Instancia del repositorio de categorías
 
-  BudgetViewModel(this._repository);
+  BudgetViewModel(this._repository , this._categoryRepository);
 
   // Estado de carga
   bool _isLoading = false;
@@ -26,6 +29,9 @@ class BudgetViewModel extends ChangeNotifier {
   //total presupuestario del usuario
   num? _totalBudgetAmount = 0.0;
   num? get totalBudgetAmount => _totalBudgetAmount;
+  //lista de categorias
+  List<CategoryModel> _categories = [];
+  List<CategoryModel> get categories => _categories;
 
   // Métodos para cargar datos
 
@@ -111,7 +117,6 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
-
   Future<void> updateBudget({
     required String id,
     required String name,
@@ -149,8 +154,7 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
-
-  Future<void> getTotalBudgetAmount() async {  
+  Future<void> getTotalBudgetAmount() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -160,6 +164,33 @@ class BudgetViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // tengo cuentas creadas
+  Future<bool> hasAccounts() async {
+    return await _repository.hasAccounts();
+  }
+
+  //cargar categorias
+  Future<void> loadCategories(String type) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      print('DEBUG: BudgetViewModel - Llamando fetchAllCategories con type: $type');
+      _categories = await _categoryRepository.fetchAllCategories(type: type);
+      print('DEBUG: BudgetViewModel - Categorías cargadas: ${_categories.length}');
+      for (var category in _categories) {
+        print('DEBUG: BudgetViewModel - Categoría: ${category.name} (${category.type})');
+      }
+    } catch (e) {
+      _error = e.toString();
+      print('DEBUG: BudgetViewModel - Error en loadCategories: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
