@@ -29,25 +29,6 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
   }
 }
 
-
-  // @override
-  // Future<void> createTransaction(TransactionModel transaction) async {
-  //   try {
-  //     final userId = _currentUserId;
-  //     if (userId == null) throw Exception('Usuario no autenticado');
-
-  //     final data = transaction.toJson()..remove('id');
-  //     data['user_id'] = userId;
-  //     final response = await _supabase
-  //         .from('transactions')
-  //         .insert(data)
-  //         .select()
-  //         .single();
-  //   } catch (e) {
-  //     throw Exception('Error al crear transacción: $e');
-  //   }
-  // }
-
   @override
 Future<void> createTransaction(TransactionModel transaction) async {
   try {
