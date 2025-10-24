@@ -84,6 +84,7 @@ class _EditBudgetState extends State<EditBudget> {
     await budgetViewModel.getBudgetById(widget.budgetId);
     if (mounted) {
       final budget = budgetViewModel.budget;
+      print(budget?.accountId);
       if (budget != null) {
         setState(() {
           _nameBudgetController.text = budget.name ?? '';
@@ -191,7 +192,7 @@ class _EditBudgetState extends State<EditBudget> {
                             const SizedBox(width: 16.0),
                             Expanded(
                               child: Text(
-                                categoryName ?? 'Selecciona una categoría',
+                                "categoria: $categoryName",
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -212,7 +213,10 @@ class _EditBudgetState extends State<EditBudget> {
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
                           children: [
-                            const Icon(Icons.category, color: Colors.purple),
+                            const Icon(
+                              Icons.monetization_on,
+                              color: Colors.purple,
+                            ),
                             const SizedBox(width: 16.0),
                             Expanded(
                               child: Text(
@@ -337,7 +341,6 @@ class _EditBudgetState extends State<EditBudget> {
                       await budgetViewModel.updateBudget(
                         id: widget.budgetId,
                         name: _nameBudgetController.text,
-                        amount: double.parse(_amountController.text),
                         period: _selectedPeriodo == 'Mensual'
                             ? 'monthly'
                             : _selectedPeriodo == 'Semanal'
@@ -345,7 +348,6 @@ class _EditBudgetState extends State<EditBudget> {
                             : _selectedPeriodo == 'Anual'
                             ? 'yearly'
                             : _selectedPeriodo,
-                        categoryId: _categoryBudgetController.text,
                         startDate: _startDate ?? DateTime.now(),
                         endDate:
                             _endDate ??

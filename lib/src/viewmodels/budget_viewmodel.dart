@@ -126,9 +126,7 @@ class BudgetViewModel extends ChangeNotifier {
   Future<void> updateBudget({
     required String id,
     required String name,
-    required double amount,
     required String period,
-    required String categoryId,
     required DateTime startDate,
     required DateTime endDate,
     required double? alertThreshold,
@@ -143,9 +141,7 @@ class BudgetViewModel extends ChangeNotifier {
       await _repository.updateBudget(
         id: id,
         name: name,
-        amount: amount,
         period: period,
-        categoryId: categoryId,
         startDate: startDate,
         endDate: endDate,
         alertThreshold: alertThreshold,

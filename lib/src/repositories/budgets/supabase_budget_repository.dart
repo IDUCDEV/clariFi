@@ -141,9 +141,7 @@ class SupabaseBudgetRepository {
   Future<void> updateBudget({
     required String id,
     required String name,
-    required double amount,
     required String period,
-    required String categoryId,
     required DateTime startDate,
     required DateTime endDate,
     required double? alertThreshold,
@@ -154,18 +152,22 @@ class SupabaseBudgetRepository {
       throw Exception('User not authenticated');
     }
 
+    print("Updating budget with id: $id");
+    print("Updating budget with name: $name");
+    print("Updating budget with period: $period");
+    print("Updating budget with start date: $startDate");
+    print("Updating budget with end date: $endDate");
+    print("Updating budget with alert threshold: $alertThreshold");
+
     final budget = BudgetModel(
       id: id,
       name: name,
-      amount: amount,
       period: period,
-      userId: userId,
-      categoryId:
-          null, // Siempre null por ahora hasta implementar selección de categoría
       startDate: startDate,
       endDate: endDate,
       alertThreshold: alertThreshold,
     );
+    print("budget para enviar: $budget");
     try {
       await _supabaseClient
           .from('budgets')
