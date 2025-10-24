@@ -51,9 +51,43 @@ class _AccountDetailViewState extends State<AccountDetailView> {
     super.dispose();
   }
 
+  /// Muestra un diálogo de confirmación antes de guardar los cambios
+  Future<bool> _showSaveConfirmation() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar cambios'),
+        content: const Text('¿Estás seguro que deseas guardar los cambios en esta cuenta?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
   /// Guarda los cambios de la cuenta
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Pedir confirmación antes de aplicar los cambios
+    final confirmed = await _showSaveConfirmation();
+    if (!confirmed) return;
 
     setState(() => _isSaving = true);
 
