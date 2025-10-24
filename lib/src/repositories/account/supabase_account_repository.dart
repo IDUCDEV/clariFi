@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/account.dart';
 import '../../services/currency_conversion_service.dart';
@@ -78,7 +80,7 @@ class SupabaseAccountRepository implements AccountRepository {
       }
       throw Exception('Error al crear cuenta: ${e.message}');
     } catch (e) {
-      print('❌ DEBUG - Exception: $e'); // DEBUG
+      developer.log('❌ DEBUG - Exception: $e', name: 'SupabaseAccountRepository', level: 800);
       rethrow;
     }
   }
@@ -119,9 +121,51 @@ class SupabaseAccountRepository implements AccountRepository {
         await _unsetOtherDefaultAccounts(userId, exceptAccountId: account.id);
       }
       
+      // Si el usuario cambió la moneda de la cuenta, debemos ajustar el balance
+      // para preservar el valor real (no cambiar el monto consolidado).
+      final existing = await getAccountById(account.id);
+      Map<String, dynamic> updateData = account.toJson();
+
+      if (existing != null && existing.currency != account.currency) {
+  developer.log('🔁 updateAccount - currency change detected: ${existing.currency} -> ${account.currency}', name: 'SupabaseAccountRepository');
+
+        // Si el usuario no modificó explícitamente el campo balance (el valor
+        // numérico llegó igual), entonces convertimos el balance existente a la
+        // nueva moneda para preservar el monto consolidado.
+  double newBalance = account.balance;
+
+  // Comparar valores redondeados a 2 decimales para evitar falsos
+  // positivos por diferencias de punto flotante o formatos.
+  int providedCents = (account.balance * 100).round();
+  int existingCents = (existing.balance * 100).round();
+  final bool balanceEdited = providedCents != existingCents;
+
+  if (!balanceEdited) {
+          final converter = CurrencyConversionService();
+          try {
+            await converter.updateExchangeRates();
+          } catch (e) {
+            developer.log('⚠️ updateAccount - No se pudieron actualizar tasas: $e', name: 'SupabaseAccountRepository', level: 900);
+          }
+
+          newBalance = converter.convert(
+            amount: existing.balance,
+            fromCurrency: existing.currency,
+            toCurrency: account.currency,
+          );
+          newBalance = double.parse(newBalance.toStringAsFixed(2));
+          developer.log('🔁 updateAccount - converted balance: $newBalance ${account.currency}', name: 'SupabaseAccountRepository');
+        } else {
+          // El usuario cambió el balance manualmente; respetamos su elección.
+          developer.log('🔁 updateAccount - balance was edited by user; keeping provided value: ${account.balance} ${account.currency}', name: 'SupabaseAccountRepository');
+        }
+
+        updateData['balance'] = newBalance;
+      }
+
       await _supabase
           .from('accounts')
-          .update(account.toJson())
+          .update(updateData)
           .eq('id', account.id)
           .eq('user_id', userId); // Seguridad: solo puede actualizar sus propias cuentas
       
@@ -197,38 +241,27 @@ class SupabaseAccountRepository implements AccountRepository {
       }
       
       // Calcular monto a sumar en la moneda de la cuenta destino.
-      // Si las monedas son distintas, convertir el balance de la cuenta origen
-      // a la moneda de la cuenta destino antes de sumar.
       double amountToAdd = fromAccount.balance;
       if (fromAccount.currency != toAccount.currency) {
         final converter = CurrencyConversionService();
         try {
-          // Intentar actualizar tasas (no crítico si falla, usamos cache)
           await converter.updateExchangeRates();
         } catch (e) {
-          // Ignorar error de actualización y usar tasas en cache/offline
-          print('⚠️ No se pudieron actualizar tasas de cambio: $e');
+          developer.log('⚠️ transferBalance - No se pudieron actualizar tasas de cambio: $e', name: 'SupabaseAccountRepository', level: 900);
         }
 
-        // Debug: mostrar monedas y balance original
-        print('🔁 transferBalance - fromAccount.currency=${fromAccount.currency}, toAccount.currency=${toAccount.currency}');
-        print('🔁 transferBalance - fromAccount.balance=${fromAccount.balance}');
-
-        // Convertir el monto desde la moneda origen a la moneda destino
         amountToAdd = converter.convert(
           amount: fromAccount.balance,
           fromCurrency: fromAccount.currency,
           toCurrency: toAccount.currency,
         );
-
-        // Redondear a 2 decimales antes de sumar/guardar para evitar problemas de floating
-        amountToAdd = double.parse(amountToAdd.toStringAsFixed(2));
-        print('🔁 transferBalance - amountToAdd (converted and rounded)=$amountToAdd ${toAccount.currency}');
+  amountToAdd = double.parse(amountToAdd.toStringAsFixed(2));
+  developer.log('🔁 transferBalance - converted amountToAdd=$amountToAdd ${toAccount.currency}', name: 'SupabaseAccountRepository');
       }
 
       // Calcular nuevo balance de la cuenta destino
       final newBalance = toAccount.balance + amountToAdd;
-      
+
       // Actualizar el balance de la cuenta destino
       await _supabase
           .from('accounts')
@@ -261,9 +294,9 @@ class SupabaseAccountRepository implements AccountRepository {
       }
       
       await query;
-    } catch (e) {
+      } catch (e) {
       // Si falla, no es crítico, continuamos
-      print('Advertencia: No se pudieron actualizar cuentas predeterminadas: $e');
+      developer.log('Advertencia: No se pudieron actualizar cuentas predeterminadas: $e', name: 'SupabaseAccountRepository', level: 900);
     }
   }
 }
