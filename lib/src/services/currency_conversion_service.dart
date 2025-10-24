@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:clarifi_app/src/config/api_config.dart';
 
 /// Servicio para conversión de monedas
@@ -75,8 +77,8 @@ class CurrencyConversionService {
       return true;
     } catch (e) {
       // If anything unexpected happens, keep using existing cached rates
-      print('⚠️ Error al actualizar tasas de cambio: $e');
-      print('📌 Usando tasas de cambio en cache/offline');
+      developer.log('⚠️ Error al actualizar tasas de cambio: $e', name: 'CurrencyConversionService', level: 1000);
+      developer.log('📌 Usando tasas de cambio en cache/offline', name: 'CurrencyConversionService');
       return false; // Usa tasas por defecto
     }
   }
@@ -85,15 +87,15 @@ class CurrencyConversionService {
   /// Esto ayuda a que la app muestre variación sin depender de una API externa.
   void _simulateMinorFluctuations() {
     final randomFactors = <String, double>{};
-    _exchangeRates.keys.forEach((currency) {
+    for (final currency in _exchangeRates.keys) {
       // Apply a tiny +/- up to 1.5% variation
       final variation = (0.985 + (0.03 * (_hashCurrency(currency) % 100) / 100));
       randomFactors[currency] = variation;
-    });
+    }
 
-    randomFactors.forEach((currency, factor) {
-      _exchangeRates[currency] = (_exchangeRates[currency] ?? 1.0) * factor;
-    });
+    for (final entry in randomFactors.entries) {
+      _exchangeRates[entry.key] = (_exchangeRates[entry.key] ?? 1.0) * entry.value;
+    }
   }
 
   // Simple deterministic hash helper so fluctuations are stable across runs
@@ -131,7 +133,7 @@ class CurrencyConversionService {
     
     // Verificar que ambas monedas existan
     if (fromRate == null || toRate == null) {
-      print('⚠️ Moneda no soportada: $fromCurrency o $targetCurrency');
+      developer.log('⚠️ Moneda no soportada: $fromCurrency o $targetCurrency', name: 'CurrencyConversionService', level: 900);
       return amount; // Retornar el monto original si no se puede convertir
     }
     

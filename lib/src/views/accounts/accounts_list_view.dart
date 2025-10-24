@@ -6,6 +6,7 @@ import 'package:clarifi_app/src/views/accounts/create_account_view.dart';
 import 'package:clarifi_app/src/views/accounts/account_detail_view.dart';
 import 'package:clarifi_app/src/constants/app_constants.dart';
 import 'package:clarifi_app/src/services/currency_conversion_service.dart';
+import 'dart:developer' as developer;
 
 /// Vista que muestra la lista de cuentas del usuario con diseño moderno
 /// Incluye saldo total consolidado y lista de cuentas individuales
@@ -93,6 +94,13 @@ class _AccountsListViewState extends State<AccountsListView> {
       amounts: balancesByCurrency,
       targetCurrency: CurrencyConversionService.baseCurrency,
     );
+    // Log diagnóstico para depurar problemas con el consolidado
+    try {
+      developer.log('🧮 consolidate - balancesByCurrency: $balancesByCurrency', name: 'AccountsListView');
+      developer.log('🧮 consolidate - totalInUSD: $totalInUSD ${CurrencyConversionService.baseCurrency}', name: 'AccountsListView');
+    } catch (e) {
+      // No bloquear por logging
+    }
     
     return totalInUSD;
   }

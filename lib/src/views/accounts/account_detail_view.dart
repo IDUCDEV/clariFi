@@ -28,6 +28,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
   late String _selectedType;
   late String _selectedCurrency;
   late bool _isDefault;
+  late AccountModel _currentAccount;
   
   bool _isEditing = false;
   bool _isSaving = false;
@@ -35,11 +36,12 @@ class _AccountDetailViewState extends State<AccountDetailView> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.account.name);
-    _balanceController = TextEditingController(text: widget.account.balance.toStringAsFixed(2));
-    _selectedType = widget.account.type;
-    _selectedCurrency = widget.account.currency;
-    _isDefault = widget.account.isDefault ?? false;
+  _currentAccount = widget.account;
+  _nameController = TextEditingController(text: _currentAccount.name);
+  _balanceController = TextEditingController(text: _currentAccount.balance.toStringAsFixed(2));
+  _selectedType = _currentAccount.type;
+  _selectedCurrency = _currentAccount.currency;
+  _isDefault = _currentAccount.isDefault ?? false;
   }
 
   @override
@@ -60,17 +62,30 @@ class _AccountDetailViewState extends State<AccountDetailView> {
       
       // Crear un nuevo AccountModel con los datos actualizados
       final updatedAccount = AccountModel(
-        id: widget.account.id,
-        userId: widget.account.userId,
+        id: _currentAccount.id,
+        userId: _currentAccount.userId,
         name: _nameController.text,
         type: _selectedType,
         currency: _selectedCurrency,
         balance: double.parse(_balanceController.text),
         isDefault: _isDefault,
-        createdAt: widget.account.createdAt,
+        createdAt: _currentAccount.createdAt,
       );
       
       await accountViewModel.updateAccount(updatedAccount);
+
+      // After successful update, refresh local account state from server/viewmodel
+      final refreshed = await accountViewModel.getAccountById(_currentAccount.id);
+      if (refreshed != null) {
+        setState(() {
+          _currentAccount = refreshed;
+          _nameController.text = _currentAccount.name;
+          _balanceController.text = _currentAccount.balance.toStringAsFixed(2);
+          _selectedType = _currentAccount.type;
+          _selectedCurrency = _currentAccount.currency;
+          _isDefault = _currentAccount.isDefault ?? false;
+        });
+      }
 
       if (mounted) {
         setState(() {
@@ -107,17 +122,17 @@ class _AccountDetailViewState extends State<AccountDetailView> {
     final accountViewModel = context.read<AccountViewModel>();
     
     // Obtener todas las cuentas excepto la actual
-    final otherAccounts = accountViewModel.accounts
-        .where((account) => account.id != widget.account.id)
+  final otherAccounts = accountViewModel.accounts
+    .where((account) => account.id != _currentAccount.id)
         .toList();
     
     // Mostrar diálogo de eliminación
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _DeleteAccountDialog(
-        accountName: widget.account.name,
-        accountBalance: widget.account.balance,
-        accountCurrency: widget.account.currency,
+        accountName: _currentAccount.name,
+        accountBalance: _currentAccount.balance,
+        accountCurrency: _currentAccount.currency,
         otherAccounts: otherAccounts,
       ),
     );
@@ -133,12 +148,12 @@ class _AccountDetailViewState extends State<AccountDetailView> {
       if (transferEnabled && targetAccountId != null) {
         // Transferir saldo y eliminar
         success = await accountViewModel.transferBalanceAndDelete(
-          fromAccountId: widget.account.id,
+          fromAccountId: _currentAccount.id,
           toAccountId: targetAccountId,
         );
       } else {
         // Solo eliminar
-        success = await accountViewModel.deleteAccount(widget.account.id);
+  success = await accountViewModel.deleteAccount(_currentAccount.id);
       }
       
       if (success && mounted) {
@@ -508,7 +523,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
             )
           else
             Text(
-              widget.account.name,
+              _currentAccount.name,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -516,7 +531,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
               ),
             ),
           const SizedBox(height: 8),
-          if (widget.account.isDefault == true)
+          if ((_currentAccount.isDefault ?? false) == true)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -546,9 +561,9 @@ class _AccountDetailViewState extends State<AccountDetailView> {
 
   /// Card con el saldo actual
   Widget _buildBalanceCard() {
-    final balance = _isEditing 
-        ? double.tryParse(_balanceController.text) ?? widget.account.balance
-        : widget.account.balance;
+  final balance = _isEditing 
+    ? double.tryParse(_balanceController.text) ?? _currentAccount.balance
+    : _currentAccount.balance;
     
     final convertedAmount = _currencyService.convert(
       amount: balance,
@@ -638,7 +653,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
   /// Campos en modo solo lectura
   Widget _buildDetailFields() {
     final accountTypeOption = AppConstants.accountTypes.firstWhere(
-      (option) => option.value == widget.account.type,
+      (option) => option.value == _currentAccount.type,
       orElse: () => AppConstants.accountTypes.last,
     );
 
@@ -646,11 +661,11 @@ class _AccountDetailViewState extends State<AccountDetailView> {
       children: [
         _buildDetailRow('Tipo de cuenta', accountTypeOption.label),
         const Divider(height: 32),
-        _buildDetailRow('Moneda', widget.account.currency),
+  _buildDetailRow('Moneda', _currentAccount.currency),
         const Divider(height: 32),
         _buildDetailRow(
           'Creada el',
-          _formatDate(widget.account.createdAt),
+          _formatDate(_currentAccount.createdAt),
         ),
       ],
     );
