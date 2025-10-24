@@ -65,11 +65,23 @@ class SupabaseBudgetRepository {
     try {
       final response = await _supabaseClient
           .from('budgets')
-          .select()
+          .select('*, accounts(name), categories(name)')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
-      return response.map((json) => BudgetModel.fromJson(json)).toList();
+      return response.map((json) {
+        // Extraer el nombre de la cuenta del join
+        final accountData = json['accounts'] as Map<String, dynamic>?;
+        if (accountData != null) {
+          json['account_name'] = accountData['name'];
+        }
+        // Extraer el nombre de la categoría del join
+        final categoryData = json['categories'] as Map<String, dynamic>?;
+        if (categoryData != null) {
+          json['category_name'] = categoryData['name'];
+        }
+        return BudgetModel.fromJson(json);
+      }).toList();
     } on PostgrestException catch (e) {
       throw Exception('Error al obtener presupuestos: ${e.message}');
     } catch (e) {
@@ -87,10 +99,21 @@ class SupabaseBudgetRepository {
     try {
       final response = await _supabaseClient
           .from('budgets')
-          .select()
+          .select('*, accounts(name), categories(name)')
           .eq('id', budgetId)
           .eq('user_id', userId)
           .single();
+
+      // Extraer el nombre de la cuenta del join
+      final accountData = response['accounts'] as Map<String, dynamic>?;
+      if (accountData != null) {
+        response['account_name'] = accountData['name'];
+      }
+      // Extraer el nombre de la categoría del join
+      final categoryData = response['categories'] as Map<String, dynamic>?;
+      if (categoryData != null) {
+        response['category_name'] = categoryData['name'];
+      }
 
       return BudgetModel.fromJson(response);
     } on PostgrestException catch (e) {

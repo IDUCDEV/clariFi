@@ -72,6 +72,7 @@ class _EditBudgetState extends State<EditBudget> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBudget();
+      _loadCategories();
     });
   }
 
@@ -100,12 +101,25 @@ class _EditBudgetState extends State<EditBudget> {
     }
   }
 
+  Future<void> _loadCategories() async {
+    final budgetViewModel = Provider.of<BudgetViewModel>(
+      context,
+      listen: false,
+    );
+    await budgetViewModel.loadCategories("expense");
+  }
+
   @override
   Widget build(BuildContext context) {
     final budgetViewModel = Provider.of<BudgetViewModel>(
       context,
       listen: false,
     );
+
+    final categoryName = budgetViewModel.categories
+        .where((category) => category.id == _categoryBudgetController.text)
+        .map((category) => category.name)
+        .firstOrNull;
 
     if (_isLoading) {
       return Scaffold(
@@ -177,9 +191,7 @@ class _EditBudgetState extends State<EditBudget> {
                             const SizedBox(width: 16.0),
                             Expanded(
                               child: Text(
-                                _categoryBudgetController.text.isEmpty
-                                    ? 'Tipo de Categoría'
-                                    : _categoryBudgetController.text,
+                                categoryName ?? 'Selecciona una categoría',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -191,29 +203,31 @@ class _EditBudgetState extends State<EditBudget> {
                       ),
                     ),
                     const SizedBox(height: 16.0),
-                    TextFormField(
-                      controller: _amountController,
-                      decoration: InputDecoration(
-                        labelText: 'Cantidad',
-                        border: const OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                    Card(
+                      color: AppColors.blush,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.category, color: Colors.purple),
+                            const SizedBox(width: 16.0),
+                            Expanded(
+                              child: Text(
+                                _amountController.text.isEmpty
+                                    ? 'Ingresa el monto del presupuesto'
+                                    : '\$${_amountController.text}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        filled: true,
-                        fillColor: AppColors.blush,
                       ),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor ingresa la cantidad';
-                        }
-                        final amount = double.tryParse(value);
-                        if (amount == null || amount <= 0) {
-                          return 'Ingresa una cantidad válida';
-                        }
-                        return null;
-                      },
                     ),
                   ],
                 ),
@@ -236,7 +250,17 @@ class _EditBudgetState extends State<EditBudget> {
                     ButtonSegment(value: 'Semanal', label: Text('Semanal')),
                     ButtonSegment(value: 'Anual', label: Text('Anual')),
                   ],
-                  selected: <String>{_selectedPeriodo.isEmpty ? 'Mensual' : _selectedPeriodo == 'monthly' ? 'Mensual' : _selectedPeriodo == 'weekly' ? 'Semanal' : _selectedPeriodo == 'yearly' ? 'Anual' : _selectedPeriodo},
+                  selected: <String>{
+                    _selectedPeriodo.isEmpty
+                        ? 'Mensual'
+                        : _selectedPeriodo == 'monthly'
+                        ? 'Mensual'
+                        : _selectedPeriodo == 'weekly'
+                        ? 'Semanal'
+                        : _selectedPeriodo == 'yearly'
+                        ? 'Anual'
+                        : _selectedPeriodo,
+                  },
                   onSelectionChanged: (newSelection) {
                     setState(() {
                       _selectedPeriodo = newSelection.first;
@@ -314,7 +338,13 @@ class _EditBudgetState extends State<EditBudget> {
                         id: widget.budgetId,
                         name: _nameBudgetController.text,
                         amount: double.parse(_amountController.text),
-                        period: _selectedPeriodo == 'Mensual' ? 'monthly' : _selectedPeriodo == 'Semanal' ? 'weekly' : _selectedPeriodo == 'Anual' ? 'yearly' : _selectedPeriodo,
+                        period: _selectedPeriodo == 'Mensual'
+                            ? 'monthly'
+                            : _selectedPeriodo == 'Semanal'
+                            ? 'weekly'
+                            : _selectedPeriodo == 'Anual'
+                            ? 'yearly'
+                            : _selectedPeriodo,
                         categoryId: _categoryBudgetController.text,
                         startDate: _startDate ?? DateTime.now(),
                         endDate:
@@ -357,10 +387,9 @@ class _EditBudgetState extends State<EditBudget> {
                       ),
                     ),
                   );
-                  if (mounted){  
+                  if (mounted) {
                     GoRouter.of(context).go('/budgets');
                   }
-                  
                 },
               ),
             ],
