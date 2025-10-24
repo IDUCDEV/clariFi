@@ -203,4 +203,61 @@ class SupabaseBudgetRepository {
       return false;
     }
   }
+
+  // funcion que resta dinero de la cuenta para el presupuesto
+  Future<void> updateAccountBalance(String accountId, double amount) async {
+    try {
+      // Obtener el saldo actual de la cuenta
+      final response = await _supabaseClient
+          .from('accounts')
+          .select('balance')
+          .eq('id', accountId)
+          .single();
+
+      final currentBalance = response['balance'] as num? ?? 0;
+      final newBalance = currentBalance.toDouble() - amount;
+
+      // Actualizar el saldo con el nuevo valor calculado
+      await _supabaseClient
+          .from('accounts')
+          .update({'balance': newBalance})
+          .eq('id', accountId);
+    } catch (e) {
+      throw Exception('Error al actualizar el saldo de la cuenta: $e');
+    }
+  }
+
+  //funcion que permite validar que el presupuesto no exceda el saldo de la cuenta
+  Future<bool> canAllocateBudget(String accountId, double amount) async {
+    try {
+      // Obtener el saldo actual de la cuenta
+      final response = await _supabaseClient
+          .from('accounts')
+          .select('balance')
+          .eq('id', accountId)
+          .single();
+
+      final currentBalance = response['balance'] as num? ?? 0;
+      final canAllocate = currentBalance >= amount;
+      return canAllocate;
+    } catch (e) {
+      throw Exception('Error al validar el saldo de la cuenta: $e');
+    }
+  }
+
+  // Método unificado para verificar y actualizar el balance de la cuenta para un presupuesto
+  Future<void> allocateBudgetToAccount(String accountId, double amount) async {
+    try {
+      // Verificar si el saldo es suficiente
+      final canAllocate = await canAllocateBudget(accountId, amount);
+      if (!canAllocate) {
+        throw Exception('Saldo insuficiente en la cuenta para asignar el presupuesto');
+      }
+
+      // Si es suficiente, actualizar el balance
+      await updateAccountBalance(accountId, amount);
+    } catch (e) {
+      throw Exception('Error al asignar presupuesto a la cuenta: $e');
+    }
+  }
 }
