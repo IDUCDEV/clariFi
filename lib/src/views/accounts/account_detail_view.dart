@@ -28,6 +28,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
   late String _selectedType;
   late String _selectedCurrency;
   late bool _isDefault;
+  late AccountModel _currentAccount;
   
   bool _isEditing = false;
   bool _isSaving = false;
@@ -35,11 +36,12 @@ class _AccountDetailViewState extends State<AccountDetailView> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.account.name);
-    _balanceController = TextEditingController(text: widget.account.balance.toStringAsFixed(2));
-    _selectedType = widget.account.type;
-    _selectedCurrency = widget.account.currency;
-    _isDefault = widget.account.isDefault ?? false;
+  _currentAccount = widget.account;
+  _nameController = TextEditingController(text: _currentAccount.name);
+  _balanceController = TextEditingController(text: _currentAccount.balance.toStringAsFixed(2));
+  _selectedType = _currentAccount.type;
+  _selectedCurrency = _currentAccount.currency;
+  _isDefault = _currentAccount.isDefault ?? false;
   }
 
   @override
@@ -49,9 +51,43 @@ class _AccountDetailViewState extends State<AccountDetailView> {
     super.dispose();
   }
 
+  /// Muestra un diálogo de confirmación antes de guardar los cambios
+  Future<bool> _showSaveConfirmation() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar cambios'),
+        content: const Text('¿Estás seguro que deseas guardar los cambios en esta cuenta?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
   /// Guarda los cambios de la cuenta
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Pedir confirmación antes de aplicar los cambios
+    final confirmed = await _showSaveConfirmation();
+    if (!confirmed) return;
 
     setState(() => _isSaving = true);
 
@@ -60,17 +96,30 @@ class _AccountDetailViewState extends State<AccountDetailView> {
       
       // Crear un nuevo AccountModel con los datos actualizados
       final updatedAccount = AccountModel(
-        id: widget.account.id,
-        userId: widget.account.userId,
+        id: _currentAccount.id,
+        userId: _currentAccount.userId,
         name: _nameController.text,
         type: _selectedType,
         currency: _selectedCurrency,
         balance: double.parse(_balanceController.text),
         isDefault: _isDefault,
-        createdAt: widget.account.createdAt,
+        createdAt: _currentAccount.createdAt,
       );
       
       await accountViewModel.updateAccount(updatedAccount);
+
+      // After successful update, refresh local account state from server/viewmodel
+      final refreshed = await accountViewModel.getAccountById(_currentAccount.id);
+      if (refreshed != null) {
+        setState(() {
+          _currentAccount = refreshed;
+          _nameController.text = _currentAccount.name;
+          _balanceController.text = _currentAccount.balance.toStringAsFixed(2);
+          _selectedType = _currentAccount.type;
+          _selectedCurrency = _currentAccount.currency;
+          _isDefault = _currentAccount.isDefault ?? false;
+        });
+      }
 
       if (mounted) {
         setState(() {
@@ -107,17 +156,17 @@ class _AccountDetailViewState extends State<AccountDetailView> {
     final accountViewModel = context.read<AccountViewModel>();
     
     // Obtener todas las cuentas excepto la actual
-    final otherAccounts = accountViewModel.accounts
-        .where((account) => account.id != widget.account.id)
+  final otherAccounts = accountViewModel.accounts
+    .where((account) => account.id != _currentAccount.id)
         .toList();
     
     // Mostrar diálogo de eliminación
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _DeleteAccountDialog(
-        accountName: widget.account.name,
-        accountBalance: widget.account.balance,
-        accountCurrency: widget.account.currency,
+        accountName: _currentAccount.name,
+        accountBalance: _currentAccount.balance,
+        accountCurrency: _currentAccount.currency,
         otherAccounts: otherAccounts,
       ),
     );
@@ -133,12 +182,12 @@ class _AccountDetailViewState extends State<AccountDetailView> {
       if (transferEnabled && targetAccountId != null) {
         // Transferir saldo y eliminar
         success = await accountViewModel.transferBalanceAndDelete(
-          fromAccountId: widget.account.id,
+          fromAccountId: _currentAccount.id,
           toAccountId: targetAccountId,
         );
       } else {
         // Solo eliminar
-        success = await accountViewModel.deleteAccount(widget.account.id);
+  success = await accountViewModel.deleteAccount(_currentAccount.id);
       }
       
       if (success && mounted) {
@@ -508,7 +557,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
             )
           else
             Text(
-              widget.account.name,
+              _currentAccount.name,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -516,7 +565,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
               ),
             ),
           const SizedBox(height: 8),
-          if (widget.account.isDefault == true)
+          if ((_currentAccount.isDefault ?? false) == true)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -546,9 +595,9 @@ class _AccountDetailViewState extends State<AccountDetailView> {
 
   /// Card con el saldo actual
   Widget _buildBalanceCard() {
-    final balance = _isEditing 
-        ? double.tryParse(_balanceController.text) ?? widget.account.balance
-        : widget.account.balance;
+  final balance = _isEditing 
+    ? double.tryParse(_balanceController.text) ?? _currentAccount.balance
+    : _currentAccount.balance;
     
     final convertedAmount = _currencyService.convert(
       amount: balance,
@@ -638,7 +687,7 @@ class _AccountDetailViewState extends State<AccountDetailView> {
   /// Campos en modo solo lectura
   Widget _buildDetailFields() {
     final accountTypeOption = AppConstants.accountTypes.firstWhere(
-      (option) => option.value == widget.account.type,
+      (option) => option.value == _currentAccount.type,
       orElse: () => AppConstants.accountTypes.last,
     );
 
@@ -646,11 +695,11 @@ class _AccountDetailViewState extends State<AccountDetailView> {
       children: [
         _buildDetailRow('Tipo de cuenta', accountTypeOption.label),
         const Divider(height: 32),
-        _buildDetailRow('Moneda', widget.account.currency),
+  _buildDetailRow('Moneda', _currentAccount.currency),
         const Divider(height: 32),
         _buildDetailRow(
           'Creada el',
-          _formatDate(widget.account.createdAt),
+          _formatDate(_currentAccount.createdAt),
         ),
       ],
     );
@@ -953,6 +1002,31 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Si no hay otras cuentas, entonces esta es la única cuenta del usuario
+                    // y no permitimos eliminarla desde la UI.
+                    if (widget.otherAccounts.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se puede eliminar la única cuenta. Crea otra cuenta antes de eliminar.'),
+                          backgroundColor: Color(0xFFEF4444),
+                        ),
+                      );
+                      return;
+                    }
+                    // Si la cuenta tiene saldo distinto de cero, requerimos que se
+                    // habilite la transferencia antes de eliminar para evitar pérdida
+                    // de fondos. Esto aplica incluso si no hay otras cuentas: en ese
+                    // caso no se puede eliminar.
+                    if (widget.accountBalance != 0 && !_transferEnabled) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se puede eliminar una cuenta con saldo. Transfiere el saldo antes de eliminar.'),
+                          backgroundColor: Color(0xFFEF4444),
+                        ),
+                      );
+                      return;
+                    }
+
                     // Validar que si está habilitada la transferencia, se haya seleccionado una cuenta
                     if (_transferEnabled && _selectedAccountId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -963,7 +1037,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                       );
                       return;
                     }
-                    
+
                     Navigator.pop(context, {
                       'confirmed': true,
                       'transferEnabled': _transferEnabled,

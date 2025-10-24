@@ -3,7 +3,6 @@ class CategoryModel {
   final String id;
   final String name;
   final String type;
-  final String userId;
   final String color;
   final String icon;
   
@@ -12,7 +11,6 @@ class CategoryModel {
     required this.id,
     required this.name,
     required this.type,
-    required this.userId,
     required this.color,
     required this.icon,
   });
@@ -22,7 +20,6 @@ class CategoryModel {
       id: json['id'],
       name: json['name'],
       type: json['type'],
-      userId: json['user_id'],
       color: json['color'],
       icon: json['icon'],
     );
@@ -33,7 +30,6 @@ class CategoryModel {
       'id': id,
       'name': name,
       'type': type,
-      'user_id': userId,
       'color': color,
       'icon': icon,
     };
