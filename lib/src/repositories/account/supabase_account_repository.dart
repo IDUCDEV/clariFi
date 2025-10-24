@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/account.dart';
+import '../../services/currency_conversion_service.dart';
 import 'account_repository.dart';
 
 /// Implementación del repositorio de cuentas usando Supabase
@@ -195,8 +196,38 @@ class SupabaseAccountRepository implements AccountRepository {
         throw Exception('Cuenta destino no encontrada');
       }
       
+      // Calcular monto a sumar en la moneda de la cuenta destino.
+      // Si las monedas son distintas, convertir el balance de la cuenta origen
+      // a la moneda de la cuenta destino antes de sumar.
+      double amountToAdd = fromAccount.balance;
+      if (fromAccount.currency != toAccount.currency) {
+        final converter = CurrencyConversionService();
+        try {
+          // Intentar actualizar tasas (no crítico si falla, usamos cache)
+          await converter.updateExchangeRates();
+        } catch (e) {
+          // Ignorar error de actualización y usar tasas en cache/offline
+          print('⚠️ No se pudieron actualizar tasas de cambio: $e');
+        }
+
+        // Debug: mostrar monedas y balance original
+        print('🔁 transferBalance - fromAccount.currency=${fromAccount.currency}, toAccount.currency=${toAccount.currency}');
+        print('🔁 transferBalance - fromAccount.balance=${fromAccount.balance}');
+
+        // Convertir el monto desde la moneda origen a la moneda destino
+        amountToAdd = converter.convert(
+          amount: fromAccount.balance,
+          fromCurrency: fromAccount.currency,
+          toCurrency: toAccount.currency,
+        );
+
+        // Redondear a 2 decimales antes de sumar/guardar para evitar problemas de floating
+        amountToAdd = double.parse(amountToAdd.toStringAsFixed(2));
+        print('🔁 transferBalance - amountToAdd (converted and rounded)=$amountToAdd ${toAccount.currency}');
+      }
+
       // Calcular nuevo balance de la cuenta destino
-      final newBalance = toAccount.balance + fromAccount.balance;
+      final newBalance = toAccount.balance + amountToAdd;
       
       // Actualizar el balance de la cuenta destino
       await _supabase
