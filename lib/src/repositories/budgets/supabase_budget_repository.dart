@@ -138,6 +138,29 @@ class SupabaseBudgetRepository {
     }
   }
 
+  //retornar dinero a la cuenta al eliminar presupuesto
+  Future<void> returnBudgetToAccount(String accountId, double amount) async {
+    try {
+      // Obtener el saldo actual de la cuenta
+      final response = await _supabaseClient
+          .from('accounts')
+          .select('balance')
+          .eq('id', accountId)
+          .single();  
+
+      final currentBalance = response['balance'] as num? ?? 0;
+      final newBalance = currentBalance.toDouble() + amount;
+
+      // Actualizar el saldo con el nuevo valor calculado
+      await _supabaseClient 
+          .from('accounts')
+          .update({'balance': newBalance})
+          .eq('id', accountId);
+    } catch (e) {
+      throw Exception('Error al actualizar el saldo de la cuenta: $e');
+    }
+  }
+
   Future<void> updateBudget({
     required String id,
     required String name,

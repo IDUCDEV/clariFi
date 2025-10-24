@@ -113,6 +113,16 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
+  //devolver dinro a la cuenta al eliminar presupuesto
+  Future<void> returnBudgetToAccount(String accountId, double amount) async {
+    try {
+      await _repository.returnBudgetToAccount(accountId, amount);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
   Future<void> getBudgetById(String budgetId) async {
     try {
       _budget = await _repository.getBudgetById(budgetId);

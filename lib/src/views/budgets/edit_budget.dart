@@ -1,6 +1,7 @@
 import "package:clarifi_app/src/colors/colors.dart";
 import "package:clarifi_app/src/viewmodels/budget_viewmodel.dart";
 import "package:clarifi_app/src/widgets/AlertThresholds.dart";
+import "package:clarifi_app/src/widgets/dialogDeleteBudget.dart";
 import "package:clarifi_app/src/widgets/primary_button.dart";
 import "package:clarifi_app/src/widgets/secondary_button.dart";
 import "package:flutter/material.dart";
@@ -108,6 +109,60 @@ class _EditBudgetState extends State<EditBudget> {
       listen: false,
     );
     await budgetViewModel.loadCategories("expense");
+  }
+
+  /// Elimina el presupuesto con opción de devolver monto a la cuenta
+  Future<void> _deleteBudget() async {
+    final budgetViewModel = context.read<BudgetViewModel>();
+
+    // Obtener todos los presupuestos excepto el actual
+    final otherBudgets = budgetViewModel.budgets
+        .where((budget) => budget.id != widget.budgetId)
+        .toList();
+
+    // Mostrar diálogo de eliminación
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => DeleteBudgetDialog(
+        budgetName: budgetViewModel.budget?.name ?? '',
+        budgetAmount: budgetViewModel.budget?.amount ?? 0.0,
+        accountCurrency: 'USD', // Asumiendo USD por defecto, ajustar según necesidad
+        otherBudgets: otherBudgets,
+      ),
+    );
+
+    if (result == null || result['confirmed'] != true) return;
+
+    try {
+      // Eliminar el presupuesto
+      await budgetViewModel.deleteBudget(widget.budgetId);
+
+      // Devolver el monto a la cuenta
+      await budgetViewModel.returnBudgetToAccount(
+        budgetViewModel.budget!.accountId!,
+        budgetViewModel.budget!.amount!,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Presupuesto eliminado exitosamente'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+
+        GoRouter.of(context).go('/budgets');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar presupuesto: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -377,22 +432,7 @@ class _EditBudgetState extends State<EditBudget> {
               const SizedBox(height: 16.0),
               SecondaryButton(
                 text: 'Eliminar Presupuesto',
-                onPressed: () async {
-                  // Lógica para eliminar el presupuesto
-                  await budgetViewModel.deleteBudget(widget.budgetId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: AppColors.success,
-                      content: Text(
-                        'Presupuesto eliminado exitosamente',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                    ),
-                  );
-                  if (mounted) {
-                    GoRouter.of(context).go('/budgets');
-                  }
-                },
+                onPressed: _deleteBudget,
               ),
             ],
           ),
