@@ -181,6 +181,70 @@ class SupabaseAccountRepository implements AccountRepository {
       if (userId == null) {
         throw Exception('Usuario no autenticado');
       }
+      // Verificar que el usuario tenga más de una cuenta; no permitir eliminar
+      // la única cuenta del usuario.
+      try {
+        final accountsResp = await _supabase
+            .from('accounts')
+            .select('id')
+            .eq('user_id', userId)
+            .limit(2); // Solo necesitamos saber si hay más de 1
+
+        final accountsList = accountsResp as List;
+        if (accountsList.length <= 1) {
+          throw Exception('No se puede eliminar la única cuenta del usuario.');
+        }
+      } catch (e) {
+        // Si detectamos que no hay otra cuenta, re-lanzamos la excepción para
+        // que el flujo superior la maneje y muestre mensaje al usuario.
+        if (e.toString().contains('No se puede eliminar la única cuenta')) rethrow;
+        // Si la consulta falló por otra razón, seguimos (la validación más
+        // estricta será aplicada por otras comprobaciones más abajo).
+      }
+      // Verificar si la cuenta tiene transacciones asociadas: si es así, no permitir eliminación
+      try {
+        final txResp = await _supabase
+            .from('transactions')
+            .select()
+            .eq('account_id', accountId)
+            .limit(1);
+
+        final txList = txResp as List;
+        if (txList.isNotEmpty) {
+          throw Exception('La cuenta tiene transacciones asociadas y no puede ser eliminada.');
+        }
+      } catch (e) {
+        // Si la consulta falla por cualquier razón, asumimos que no hay transacciones
+        // y continuamos. Errores reales serán reportados por la llamada principal.
+      }
+
+      // Si la cuenta a eliminar es la cuenta por defecto, promover otra cuenta automáticamente
+      try {
+        final existing = await getAccountById(accountId);
+        if (existing != null && (existing.isDefault ?? false) == true) {
+          // Buscar otra cuenta del usuario para promover
+          final others = await _supabase
+              .from('accounts')
+              .select()
+              .eq('user_id', userId)
+              .neq('id', accountId)
+              .order('created_at', ascending: false)
+              .limit(1);
+
+          final othersList = others as List;
+          if (othersList.isNotEmpty) {
+            final promoteId = othersList.first['id'] as String;
+            await _supabase
+                .from('accounts')
+                .update({'is_default': true})
+                .eq('id', promoteId)
+                .eq('user_id', userId);
+            developer.log('🔁 deleteAccount - promoted account $promoteId as default', name: 'SupabaseAccountRepository');
+          }
+        }
+      } catch (e) {
+        developer.log('⚠️ deleteAccount - error while promoting default: $e', name: 'SupabaseAccountRepository', level: 900);
+      }
       
       await _supabase
           .from('accounts')
