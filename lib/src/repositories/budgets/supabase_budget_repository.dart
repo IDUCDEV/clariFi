@@ -32,7 +32,7 @@ class SupabaseBudgetRepository {
         amount: amount,
         period: period,
         userId: userId,
-        categoryId: categoryId, // Siempre null por ahora hasta implementar selección de categoría
+        categoryId: categoryId,
         startDate: startDate,
         endDate: endDate,
         alertThreshold: alertThreshold,
@@ -152,13 +152,6 @@ class SupabaseBudgetRepository {
       throw Exception('User not authenticated');
     }
 
-    print("Updating budget with id: $id");
-    print("Updating budget with name: $name");
-    print("Updating budget with period: $period");
-    print("Updating budget with start date: $startDate");
-    print("Updating budget with end date: $endDate");
-    print("Updating budget with alert threshold: $alertThreshold");
-
     final budget = BudgetModel(
       id: id,
       name: name,
@@ -167,11 +160,19 @@ class SupabaseBudgetRepository {
       endDate: endDate,
       alertThreshold: alertThreshold,
     );
-    print("budget para enviar: $budget");
+
+    final data = budget.toJson();
+      // Excluir campos generados por la DB
+    data.remove('amount');
+    data.remove('user_id');
+    data.remove('category_id');
+    data.remove('account_id');
+    data.remove('created_at');
+    
     try {
       await _supabaseClient
           .from('budgets')
-          .update(budget.toJson())
+          .update(data)
           .eq('id', budget.id!);
     } on PostgrestException catch (e) {
       throw Exception('Error al actualizar presupuesto: ${e.message}');
