@@ -10,6 +10,7 @@
 .history
 .svn/
 .swiftpm/
+
 migrate_working_dir/
 
 # IntelliJ related
@@ -46,3 +47,6 @@ app.*.map.json
 
 # Environment variables
 .env
+
+# Local configuration files
+/ios
