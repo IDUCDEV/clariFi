@@ -1002,6 +1002,31 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Si no hay otras cuentas, entonces esta es la única cuenta del usuario
+                    // y no permitimos eliminarla desde la UI.
+                    if (widget.otherAccounts.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se puede eliminar la única cuenta. Crea otra cuenta antes de eliminar.'),
+                          backgroundColor: Color(0xFFEF4444),
+                        ),
+                      );
+                      return;
+                    }
+                    // Si la cuenta tiene saldo distinto de cero, requerimos que se
+                    // habilite la transferencia antes de eliminar para evitar pérdida
+                    // de fondos. Esto aplica incluso si no hay otras cuentas: en ese
+                    // caso no se puede eliminar.
+                    if (widget.accountBalance != 0 && !_transferEnabled) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se puede eliminar una cuenta con saldo. Transfiere el saldo antes de eliminar.'),
+                          backgroundColor: Color(0xFFEF4444),
+                        ),
+                      );
+                      return;
+                    }
+
                     // Validar que si está habilitada la transferencia, se haya seleccionado una cuenta
                     if (_transferEnabled && _selectedAccountId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1012,7 +1037,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                       );
                       return;
                     }
-                    
+
                     Navigator.pop(context, {
                       'confirmed': true,
                       'transferEnabled': _transferEnabled,
