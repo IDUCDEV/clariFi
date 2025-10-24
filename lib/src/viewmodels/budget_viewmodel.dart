@@ -52,7 +52,7 @@ class BudgetViewModel extends ChangeNotifier {
   }
 
   // registrar presupuesto
-  Future<void> createBudget({
+  Future<bool?> createBudget({
     required String name,
     required double amount,
     required String period,
@@ -83,8 +83,10 @@ class BudgetViewModel extends ChangeNotifier {
       );
       // Actualizar la lista de presupuestos después de registrar
       await loadBudgets();
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

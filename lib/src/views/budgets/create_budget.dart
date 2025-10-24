@@ -396,7 +396,7 @@ class _CreateBudgetState extends State<CreateBudget> {
                       startDate != null &&
                       endDate != null) {
                     try {
-                      await budgetViewModel.createBudget(
+                      final success = await budgetViewModel.createBudget(
                         name: _nameBudgetController.text,
                         amount: double.parse(_amountController.text),
                         period: _selectedPeriod,
@@ -406,6 +406,19 @@ class _CreateBudgetState extends State<CreateBudget> {
                         alertThreshold: _selectedThreshold,
                         accountId: _accountIdBudgetController.text,
                       );
+
+                      if (success == false) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Fondos insuficientes en la cuenta para asignar este presupuesto.',
+                              ),
+                            ),
+                          );
+                        }
+                        return;
+                      }
 
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
