@@ -7,7 +7,17 @@ class Budgetitemtolistbudgetdarshboard extends StatelessWidget {
   final String title;
   final String budget;
   final String spent;
-  const Budgetitemtolistbudgetdarshboard({super.key, required this.id, required this.title, required this.budget, required this.spent});
+  final String? accountName;
+  final String? categoryName;
+  const Budgetitemtolistbudgetdarshboard({
+    super.key,
+    required this.id,
+    required this.title,
+    required this.budget,
+    required this.spent,
+    this.accountName,
+    this.categoryName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +42,14 @@ class Budgetitemtolistbudgetdarshboard extends StatelessWidget {
                   Text('Presupuesto: \$$budget', style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 4.0),
                   Text('Gastado: \$$spent', style: const TextStyle(fontSize: 14)),
+                  if (accountName != null) ...[
+                    const SizedBox(height: 4.0),
+                    Text('Cuenta: $accountName', style: const TextStyle(fontSize: 14)),
+                  ],
+                  if (categoryName != null) ...[
+                    const SizedBox(height: 4.0),
+                    Text('Categoría: $categoryName', style: const TextStyle(fontSize: 14)),
+                  ],
                 ],
               ),
             ),

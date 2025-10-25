@@ -1,11 +1,14 @@
 import 'package:clarifi_app/src/models/budget.dart';
+import 'package:clarifi_app/src/models/category.dart';
 import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
+import 'package:clarifi_app/src/repositories/category/category_repository.dart';
 import 'package:flutter/material.dart';
 
 class BudgetViewModel extends ChangeNotifier {
   final SupabaseBudgetRepository _repository;
+  final CategoryRepository _categoryRepository; // Instancia del repositorio de categorías
 
-  BudgetViewModel(this._repository);
+  BudgetViewModel(this._repository , this._categoryRepository);
 
   // Estado de carga
   bool _isLoading = false;
@@ -26,6 +29,9 @@ class BudgetViewModel extends ChangeNotifier {
   //total presupuestario del usuario
   num? _totalBudgetAmount = 0.0;
   num? get totalBudgetAmount => _totalBudgetAmount;
+  //lista de categorias
+  List<CategoryModel> _categories = [];
+  List<CategoryModel> get categories => _categories;
 
   // Métodos para cargar datos
 
@@ -46,7 +52,7 @@ class BudgetViewModel extends ChangeNotifier {
   }
 
   // registrar presupuesto
-  Future<void> createBudget({
+  Future<bool?> createBudget({
     required String name,
     required double amount,
     required String period,
@@ -54,14 +60,17 @@ class BudgetViewModel extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
     required double? alertThreshold,
+    required String accountId,
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Aquí iría la llamada al repositorio para registrar el presupuesto
-      // Ejemplo:
+      // Verificar y asignar presupuesto a la cuenta
+      await _repository.allocateBudgetToAccount(accountId, amount);
+
+      // Crear el presupuesto
       await _repository.createBudget(
         name,
         amount,
@@ -70,11 +79,14 @@ class BudgetViewModel extends ChangeNotifier {
         startDate,
         endDate,
         alertThreshold,
+        accountId,
       );
       // Actualizar la lista de presupuestos después de registrar
       await loadBudgets();
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -101,6 +113,16 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
+  //devolver dinro a la cuenta al eliminar presupuesto
+  Future<void> returnBudgetToAccount(String accountId, double amount) async {
+    try {
+      await _repository.returnBudgetToAccount(accountId, amount);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
   Future<void> getBudgetById(String budgetId) async {
     try {
       _budget = await _repository.getBudgetById(budgetId);
@@ -111,13 +133,10 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
-
   Future<void> updateBudget({
     required String id,
     required String name,
-    required double amount,
     required String period,
-    required String categoryId,
     required DateTime startDate,
     required DateTime endDate,
     required double? alertThreshold,
@@ -132,9 +151,7 @@ class BudgetViewModel extends ChangeNotifier {
       await _repository.updateBudget(
         id: id,
         name: name,
-        amount: amount,
         period: period,
-        categoryId: categoryId,
         startDate: startDate,
         endDate: endDate,
         alertThreshold: alertThreshold,
@@ -149,8 +166,7 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
-
-  Future<void> getTotalBudgetAmount() async {  
+  Future<void> getTotalBudgetAmount() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -158,6 +174,26 @@ class BudgetViewModel extends ChangeNotifier {
     try {
       _totalBudgetAmount = await _repository.getTotalBudgetAmount();
       notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // tengo cuentas creadas
+  Future<bool> hasAccounts() async {
+    return await _repository.hasAccounts();
+  }
+
+  //cargar categorias
+  Future<void> loadCategories(String type) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      _categories = await _categoryRepository.fetchAllCategories(type: type);
     } catch (e) {
       _error = e.toString();
     } finally {

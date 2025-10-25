@@ -1,6 +1,7 @@
 import "package:clarifi_app/src/colors/colors.dart";
 import "package:clarifi_app/src/viewmodels/budget_viewmodel.dart";
 import "package:clarifi_app/src/widgets/AlertThresholds.dart";
+import "package:clarifi_app/src/widgets/dialogDeleteBudget.dart";
 import "package:clarifi_app/src/widgets/primary_button.dart";
 import "package:clarifi_app/src/widgets/secondary_button.dart";
 import "package:flutter/material.dart";
@@ -72,6 +73,7 @@ class _EditBudgetState extends State<EditBudget> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBudget();
+      _loadCategories();
     });
   }
 
@@ -83,6 +85,7 @@ class _EditBudgetState extends State<EditBudget> {
     await budgetViewModel.getBudgetById(widget.budgetId);
     if (mounted) {
       final budget = budgetViewModel.budget;
+      print(budget?.accountId);
       if (budget != null) {
         setState(() {
           _nameBudgetController.text = budget.name ?? '';
@@ -100,12 +103,79 @@ class _EditBudgetState extends State<EditBudget> {
     }
   }
 
+  Future<void> _loadCategories() async {
+    final budgetViewModel = Provider.of<BudgetViewModel>(
+      context,
+      listen: false,
+    );
+    await budgetViewModel.loadCategories("expense");
+  }
+
+  /// Elimina el presupuesto con opción de devolver monto a la cuenta
+  Future<void> _deleteBudget() async {
+    final budgetViewModel = context.read<BudgetViewModel>();
+
+    // Obtener todos los presupuestos excepto el actual
+    final otherBudgets = budgetViewModel.budgets
+        .where((budget) => budget.id != widget.budgetId)
+        .toList();
+
+    // Mostrar diálogo de eliminación
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => DeleteBudgetDialog(
+        budgetName: budgetViewModel.budget?.name ?? '',
+        budgetAmount: budgetViewModel.budget?.amount ?? 0.0,
+        accountCurrency: 'USD', // Asumiendo USD por defecto, ajustar según necesidad
+        otherBudgets: otherBudgets,
+      ),
+    );
+
+    if (result == null || result['confirmed'] != true) return;
+
+    try {
+      // Eliminar el presupuesto
+      await budgetViewModel.deleteBudget(widget.budgetId);
+
+      // Devolver el monto a la cuenta
+      await budgetViewModel.returnBudgetToAccount(
+        budgetViewModel.budget!.accountId!,
+        budgetViewModel.budget!.amount!,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Presupuesto eliminado exitosamente'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+
+        GoRouter.of(context).go('/budgets');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar presupuesto: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final budgetViewModel = Provider.of<BudgetViewModel>(
       context,
       listen: false,
     );
+
+    final categoryName = budgetViewModel.categories
+        .where((category) => category.id == _categoryBudgetController.text)
+        .map((category) => category.name)
+        .firstOrNull;
 
     if (_isLoading) {
       return Scaffold(
@@ -177,9 +247,7 @@ class _EditBudgetState extends State<EditBudget> {
                             const SizedBox(width: 16.0),
                             Expanded(
                               child: Text(
-                                _categoryBudgetController.text.isEmpty
-                                    ? 'Tipo de Categoría'
-                                    : _categoryBudgetController.text,
+                                "categoria: $categoryName",
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -191,29 +259,34 @@ class _EditBudgetState extends State<EditBudget> {
                       ),
                     ),
                     const SizedBox(height: 16.0),
-                    TextFormField(
-                      controller: _amountController,
-                      decoration: InputDecoration(
-                        labelText: 'Cantidad',
-                        border: const OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                    Card(
+                      color: AppColors.blush,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.monetization_on,
+                              color: Colors.purple,
+                            ),
+                            const SizedBox(width: 16.0),
+                            Expanded(
+                              child: Text(
+                                _amountController.text.isEmpty
+                                    ? 'Ingresa el monto del presupuesto'
+                                    : '\$${_amountController.text}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        filled: true,
-                        fillColor: AppColors.blush,
                       ),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor ingresa la cantidad';
-                        }
-                        final amount = double.tryParse(value);
-                        if (amount == null || amount <= 0) {
-                          return 'Ingresa una cantidad válida';
-                        }
-                        return null;
-                      },
                     ),
                   ],
                 ),
@@ -236,7 +309,17 @@ class _EditBudgetState extends State<EditBudget> {
                     ButtonSegment(value: 'Semanal', label: Text('Semanal')),
                     ButtonSegment(value: 'Anual', label: Text('Anual')),
                   ],
-                  selected: <String>{_selectedPeriodo.isEmpty ? 'Mensual' : _selectedPeriodo == 'monthly' ? 'Mensual' : _selectedPeriodo == 'weekly' ? 'Semanal' : _selectedPeriodo == 'yearly' ? 'Anual' : _selectedPeriodo},
+                  selected: <String>{
+                    _selectedPeriodo.isEmpty
+                        ? 'Mensual'
+                        : _selectedPeriodo == 'monthly'
+                        ? 'Mensual'
+                        : _selectedPeriodo == 'weekly'
+                        ? 'Semanal'
+                        : _selectedPeriodo == 'yearly'
+                        ? 'Anual'
+                        : _selectedPeriodo,
+                  },
                   onSelectionChanged: (newSelection) {
                     setState(() {
                       _selectedPeriodo = newSelection.first;
@@ -313,9 +396,13 @@ class _EditBudgetState extends State<EditBudget> {
                       await budgetViewModel.updateBudget(
                         id: widget.budgetId,
                         name: _nameBudgetController.text,
-                        amount: double.parse(_amountController.text),
-                        period: _selectedPeriodo == 'Mensual' ? 'monthly' : _selectedPeriodo == 'Semanal' ? 'weekly' : _selectedPeriodo == 'Anual' ? 'yearly' : _selectedPeriodo,
-                        categoryId: _categoryBudgetController.text,
+                        period: _selectedPeriodo == 'Mensual'
+                            ? 'monthly'
+                            : _selectedPeriodo == 'Semanal'
+                            ? 'weekly'
+                            : _selectedPeriodo == 'Anual'
+                            ? 'yearly'
+                            : _selectedPeriodo,
                         startDate: _startDate ?? DateTime.now(),
                         endDate:
                             _endDate ??
@@ -345,23 +432,7 @@ class _EditBudgetState extends State<EditBudget> {
               const SizedBox(height: 16.0),
               SecondaryButton(
                 text: 'Eliminar Presupuesto',
-                onPressed: () async {
-                  // Lógica para eliminar el presupuesto
-                  await budgetViewModel.deleteBudget(widget.budgetId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: AppColors.success,
-                      content: Text(
-                        'Presupuesto eliminado exitosamente',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                    ),
-                  );
-                  if (mounted){  
-                    GoRouter.of(context).go('/budgets');
-                  }
-                  
-                },
+                onPressed: _deleteBudget,
               ),
             ],
           ),
