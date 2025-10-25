@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:clarifi_app/src/services/currency_conversion_service.dart';
@@ -27,8 +28,9 @@ class _ConsolidatedSummaryViewState extends State<ConsolidatedSummaryView> {
 
   @override
   Widget build(BuildContext context) {
-    final accountViewModel = context.watch<AccountViewModel>();
-    final accounts = widget.accounts ?? accountViewModel.accounts;
+  final accountViewModel = context.watch<AccountViewModel>();
+  // Use live accounts from the view model so the screen updates in real time
+  final accounts = accountViewModel.accounts;
 
     // Agrupar saldos por moneda
     final balancesByCurrency = <String, double>{};
@@ -36,7 +38,7 @@ class _ConsolidatedSummaryViewState extends State<ConsolidatedSummaryView> {
       balancesByCurrency[a.currency] = (balancesByCurrency[a.currency] ?? 0.0) + a.balance;
     }
 
-    final total = _currencyService.consolidate(amounts: balancesByCurrency, targetCurrency: _selectedCurrency);
+  final total = _currencyService.consolidate(amounts: balancesByCurrency, targetCurrency: _selectedCurrency);
 
     // Agrupar por tipo y convertir a moneda seleccionada
     final byType = <String, double>{};
@@ -89,9 +91,19 @@ class _ConsolidatedSummaryViewState extends State<ConsolidatedSummaryView> {
                 children: [
                   const Icon(Icons.update, size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
-                  Text(
-                    _currencyService.lastUpdate == null ? 'Última actualización: --' : 'Última actualización: ${_currencyService.lastUpdate}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _currencyService.lastUpdate == null ? 'Tasas: --' : 'Tasas: ${DateFormat.yMMMd().add_jm().format(_currencyService.lastUpdate!)}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        accountViewModel.lastUpdated == null ? 'Datos: --' : 'Datos: ${DateFormat.yMMMd().add_jm().format(accountViewModel.lastUpdated!)}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
                   ),
                 ],
               ),
