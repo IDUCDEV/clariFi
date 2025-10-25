@@ -40,7 +40,6 @@ class _AlertThresholdsState extends State<AlertThresholds> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

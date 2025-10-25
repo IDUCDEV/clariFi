@@ -21,7 +21,7 @@ class SupabaseCategoryRepository implements CategoryRepository {
 
       var query = _supabase.from('categories').select();
 
-      if (type != null) {
+      if (type != null && type != 'all') {
         query = query.eq('type', type);
       }
 
@@ -29,10 +29,18 @@ class SupabaseCategoryRepository implements CategoryRepository {
 
       // Imprime lo que devuelve la DB
       print('📝 Response categories: $response');
+      print('📝 Número de categorías en respuesta: ${(response as List).length}');
 
-      return (response as List)
+      final categories = (response as List)
           .map((e) => CategoryModel.fromJson(e))
           .toList();
+
+      print('📝 Categorías parseadas: ${categories.length}');
+      for (var cat in categories) {
+        print('📝 Categoría: ${cat.name} - Tipo: ${cat.type} - ID: ${cat.id}');
+      }
+
+      return categories;
     } on PostgrestException catch (e) {
       print('❌ PostgrestException: ${e.message}');
       return [];
