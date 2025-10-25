@@ -12,6 +12,8 @@ class BudgetModel {
   final DateTime? endDate;
   final double? alertThreshold;
   final DateTime? createdAt;
+  final num? spentAmount;
+  final num? availableAmount; // Nuevo campo para el monto gastado
 
   BudgetModel({
     this.id,
@@ -25,6 +27,8 @@ class BudgetModel {
     this.endDate,
     this.alertThreshold,
     this.createdAt,
+    this.spentAmount,
+    this.availableAmount,
   });
 
   factory BudgetModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,9 @@ class BudgetModel {
       endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
       alertThreshold: json['alert_threshold'] != null ? (json['alert_threshold'] as num).toDouble() : null,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
+      spentAmount: json['spent_amount'] != null ? (json['spent_amount'] as num) : 0,
+      availableAmount: json['available_amount'] != null ? (json['available_amount'] as num) : 0,
+
     );
   }
 
@@ -56,6 +63,8 @@ class BudgetModel {
       'end_date': endDate?.toIso8601String().split('T').first,
       'alert_threshold': alertThreshold,
       'created_at': createdAt?.toIso8601String().split('T').first,
+      'spent_amount': spentAmount,
+      'available_amount': availableAmount,
     };
   }
 }

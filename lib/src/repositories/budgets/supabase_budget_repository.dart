@@ -68,7 +68,7 @@ class SupabaseBudgetRepository {
           .select('*, accounts(name), categories(name)')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
-
+          
       return response.map((json) {
         // Extraer el nombre de la cuenta del join
         final accountData = json['accounts'] as Map<String, dynamic>?;
@@ -201,6 +201,35 @@ class SupabaseBudgetRepository {
       throw Exception('Error al actualizar presupuesto: ${e.message}');
     } catch (e) {
       throw Exception('Error al actualizar presupuesto: $e');
+    }
+  }
+
+
+  Future<num> getTotalSpentAmount() async {
+    final userId = _currentUserId;
+
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await _supabaseClient
+          .from('budgets')
+          .select('spent_amount')
+          .eq('user_id', userId);
+
+      final spentAmounts = (response as List)
+          .map((item) => item['spent_amount'] as num? ?? 0)
+          .toList();
+
+      final totalSpent = spentAmounts.fold<num>(0, (prev, element) => prev + element);
+      return totalSpent;
+    } on PostgrestException catch (e) {
+      throw Exception(
+        'Error al obtener el total gastado: ${e.message}',
+      );
+    } catch (e) {
+      throw Exception('Error al obtener el total gastado: $e');
     }
   }
 

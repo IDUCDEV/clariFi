@@ -29,6 +29,10 @@ class BudgetViewModel extends ChangeNotifier {
   //total presupuestario del usuario
   num? _totalBudgetAmount = 0.0;
   num? get totalBudgetAmount => _totalBudgetAmount;
+
+  //total gastado de todos los presupuestos
+  num? _totalSpentAmount = 0.0;
+  num? get totalSpentAmount => _totalSpentAmount;
   //lista de categorias
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
@@ -158,6 +162,24 @@ class BudgetViewModel extends ChangeNotifier {
       );
       // Actualizar la lista de presupuestos después de actualizar
       await loadBudgets();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  //aqui van todo lo gastado de todos los presupuestos
+  Future<void> getTotalSpentAmount() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _totalSpentAmount = await _repository.getTotalSpentAmount();
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
     } finally {
