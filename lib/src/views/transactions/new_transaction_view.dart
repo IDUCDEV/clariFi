@@ -1,7 +1,9 @@
 import 'package:clarifi_app/src/colors/colors.dart';
 import 'package:clarifi_app/src/models/transaction.dart';
+import 'package:clarifi_app/src/models/budget.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
+import 'package:clarifi_app/src/viewmodels/budget_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -29,14 +31,15 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
   bool linkToBudget = false;
 
   /// Fake budgets (hasta que tu compañero conecte servicio real)
-  final List<Map<String, String>> fakeBudgets = [
-    {'id': 'b679dc71-5a15-49cf-9fc0-56e5e3ece7e1', 'name': 'Comidas'},
-    {'id': Uuid().v4(), 'name': 'Transporte'},
-    {'id': Uuid().v4(), 'name': 'Casa'},
-  ];
+  // final List<Map<String, String>> fakeBudgets = [
+  //   {'id': 'b679dc71-5a15-49cf-9fc0-56e5e3ece7e1', 'name': 'Comidas'},
+  //   {'id': Uuid().v4(), 'name': 'Transporte'},
+  //   {'id': Uuid().v4(), 'name': 'Casa'},
+  // ];
 
-  List<Map<String, String>> budgets = [];
-  bool budgetsLoading = false;
+
+  // List<Map<String, String>> budgets = [];
+  // bool budgetsLoading = false;
 
   @override
   void initState() {
@@ -45,7 +48,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TransactionViewModel>().loadCategories(widget.type);
       context.read<AccountViewModel>().loadAccounts();
-      _loadBudgetsFake();
+      context.read<BudgetViewModel>().loadBudgets();
     });
 
     noteController.addListener(() {
@@ -60,11 +63,6 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     });
   }
 
-  Future<void> _loadBudgetsFake() async {
-    budgets = fakeBudgets;
-    if (mounted) setState(() {});
-  }
-
   @override
   void dispose() {
     noteController.dispose();
@@ -76,8 +74,11 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
   Widget build(BuildContext context) {
     final vm = context.watch<TransactionViewModel>();
     final vmAccounts = context.watch<AccountViewModel>();
+    final vmBudgets = context.watch<BudgetViewModel>();
     final isExpense = widget.type == 'expense';
     final title = isExpense ? 'Nuevo Gasto' : 'Nuevo Ingreso';
+    final budgets = vmBudgets.budgets;
+    final budgetsLoading = vmBudgets.isLoading;
 
     final formattedDate = selectedDate != null
         ? DateFormat('dd/MM/yyyy').format(selectedDate!)
@@ -161,28 +162,32 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
             const SizedBox(height: 12),
 
-            if (linkToBudget) ...[
-              if (budgets.isEmpty)
-                Column(
-                  children: [
-                    const Text("No hay presupuestos. Crea uno."),
-                    const SizedBox(height: 6),
-                    ElevatedButton(
-                      onPressed: () {},
-                      child: const Text("Crear presupuesto"),
-                    )
-                  ],
-                )
-              else
-                _buildDropdown(
-                  "Seleccionar presupuesto",
-                  selectedBudgetId,
-                  budgets,
-                  (v) => setState(() => selectedBudgetId = v),
-                ),
+         if (linkToBudget) ...[
+  if (budgetsLoading)
+    const CircularProgressIndicator()
+  else if (budgets.isEmpty)
+    Column(
+      children: [
+        const Text("No hay presupuestos. Crea uno."),
+        const SizedBox(height: 6),
+        ElevatedButton(
+          onPressed: () {
+            // TODO: Navegar a creación de presupuesto
+          },
+          child: const Text("Crear presupuesto"),
+        ),
+      ],
+    )
+  else
+    _buildBudgetDropdown(
+      "Seleccionar presupuesto",
+      selectedBudgetId,
+      budgets,
+      (v) => setState(() => selectedBudgetId = v),
+    ),
 
-              const SizedBox(height: 12),
-            ] else ...[
+  const SizedBox(height: 12),
+]else ...[
               // Categoría
               if (vm.isLoading)
                 const CircularProgressIndicator()
@@ -279,7 +284,9 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
         ),
       ),
     );
+
   }
+  
 
   Widget _buildDropdown(
     String hint,
@@ -310,6 +317,39 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
     );
   }
 
+  Widget _buildBudgetDropdown(
+  String hint,
+  String? selectedId,
+  List<BudgetModel> budgets,
+  ValueChanged<String?>? onChanged,
+) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      color: AppColors.lightPurple,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: selectedId,
+        hint: Text(hint),
+        items: budgets
+            .map<DropdownMenuItem<String>>(
+              (b) => DropdownMenuItem<String>(
+                value: b.id ?? '',
+                child: Text(b.name ?? 'Sin nombre'),
+              ),
+            )
+            .toList(),
+        onChanged: onChanged,
+        isExpanded: true,
+      ),
+    ),
+  );
+}
+
+
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -322,7 +362,9 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
       setState(() => selectedDate = picked);
     }
   }
-
+  String? _cleanId(String? id) =>
+    (id == null || id.trim().isEmpty) ? null : id;
+  
   Future<void> _saveTransaction(BuildContext context) async {
     final vm = context.read<TransactionViewModel>();
     final amount = double.tryParse(amountController.text) ?? 0;
@@ -352,9 +394,9 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
     final tx = TransactionModel(
   id: const Uuid().v4(),
-  accountId: linkToBudget ? null : selectedAccountId,
-  categoryId: linkToBudget ? null : selectedCategoryId,
-  budgetId: linkToBudget ? selectedBudgetId : null,
+  accountId: linkToBudget ? null : _cleanId(selectedAccountId),
+categoryId: linkToBudget ? null : _cleanId(selectedCategoryId),
+budgetId: linkToBudget ? _cleanId(selectedBudgetId) : null,
   type: widget.type,
   amount: amount,
   date: selectedDate ?? DateTime.now(),

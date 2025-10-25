@@ -29,7 +29,60 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
   }
 }
 
-  @override
+//   @override
+// Future<void> createTransaction(TransactionModel transaction) async {
+//   try {
+//     final userId = _currentUserId;
+//     if (userId == null) throw Exception('Usuario no autenticado');
+
+//     final data = transaction.toJson()..remove('id');
+//     data['user_id'] = userId;
+
+//     // 1️⃣ Insertar la transacción
+//     final response = await _supabase
+//         .from('transactions')
+//         .insert(data)
+//         .select()
+//         .single();
+
+//     // 2️⃣ Si está asociado a presupuesto, resta del presupuesto disponible
+//     if (transaction.budgetId != null) {
+//       await _supabase.rpc(
+//         'subtract_from_budget',
+//         params: {
+//           'p_budget_id': transaction.budgetId,
+//           'p_amount': transaction.amount
+//         },
+//       );
+//     }
+
+//     // 3️⃣ Si NO tiene presupuesto, actualizar la cuenta
+//     if (transaction.budgetId == null && transaction.accountId != null) {
+//       if (transaction.type == 'expense') {
+//         await _supabase.rpc(
+//           'decrease_account_amount',
+//           params: {
+//             'p_account_id': transaction.accountId,
+//             'p_amount': transaction.amount
+//           },
+//         );
+//       } else {
+//         await _supabase.rpc(
+//           'increase_account_amount',
+//           params: {
+//             'p_account_id': transaction.accountId,
+//             'p_amount': transaction.amount
+//           },
+//         );
+//       }
+//     }
+
+//   } catch (e) {
+//     throw Exception('Error al crear transacción: $e');
+//   }
+// }
+
+@override
 Future<void> createTransaction(TransactionModel transaction) async {
   try {
     final userId = _currentUserId;
@@ -45,15 +98,25 @@ Future<void> createTransaction(TransactionModel transaction) async {
         .select()
         .single();
 
-    // 2️⃣ Si está asociado a presupuesto, resta del presupuesto disponible
+    // 2️⃣ Si está asociado a presupuesto, actualiza según tipo
     if (transaction.budgetId != null) {
-      await _supabase.rpc(
-        'subtract_from_budget',
-        params: {
-          'p_budget_id': transaction.budgetId,
-          'p_amount': transaction.amount
-        },
-      );
+      if (transaction.type == 'expense') {
+        await _supabase.rpc(
+          'subtract_from_budget',
+          params: {
+            'p_budget_id': transaction.budgetId,
+            'p_amount': transaction.amount,
+          },
+        );
+      } else if (transaction.type == 'income') {
+        await _supabase.rpc(
+          'add_to_budget',
+          params: {
+            'p_budget_id': transaction.budgetId,
+            'p_amount': transaction.amount,
+          },
+        );
+      }
     }
 
     // 3️⃣ Si NO tiene presupuesto, actualizar la cuenta
@@ -63,7 +126,7 @@ Future<void> createTransaction(TransactionModel transaction) async {
           'decrease_account_amount',
           params: {
             'p_account_id': transaction.accountId,
-            'p_amount': transaction.amount
+            'p_amount': transaction.amount,
           },
         );
       } else {
@@ -71,7 +134,7 @@ Future<void> createTransaction(TransactionModel transaction) async {
           'increase_account_amount',
           params: {
             'p_account_id': transaction.accountId,
-            'p_amount': transaction.amount
+            'p_amount': transaction.amount,
           },
         );
       }
