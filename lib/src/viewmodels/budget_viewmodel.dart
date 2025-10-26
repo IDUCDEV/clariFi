@@ -1,3 +1,4 @@
+import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/models/budget.dart';
 import 'package:clarifi_app/src/models/category.dart';
 import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
@@ -36,6 +37,11 @@ class BudgetViewModel extends ChangeNotifier {
   //lista de categorias
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
+
+  //cuenta asociada al presupuesto para mostrar en la UI
+  AccountModel? _accountById;
+  AccountModel? get accountById => _accountById;
+
 
   // Métodos para cargar datos
 
@@ -216,6 +222,21 @@ class BudgetViewModel extends ChangeNotifier {
       _error = null;
       notifyListeners();
       _categories = await _categoryRepository.fetchAllCategories(type: type);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // obtener cuenta asociada al presupuesto para mostrar en la UI de editar presupuesto
+  Future<void> loadAccountById(String accountId) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      _accountById = await _repository.getAccountById(accountId);
     } catch (e) {
       _error = e.toString();
     } finally {

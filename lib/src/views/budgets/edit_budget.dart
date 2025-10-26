@@ -74,6 +74,7 @@ class _EditBudgetState extends State<EditBudget> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBudget();
       _loadCategories();
+      _loadAccountById();
     });
   }
 
@@ -85,7 +86,6 @@ class _EditBudgetState extends State<EditBudget> {
     await budgetViewModel.getBudgetById(widget.budgetId);
     if (mounted) {
       final budget = budgetViewModel.budget;
-      print(budget?.accountId);
       if (budget != null) {
         setState(() {
           _nameBudgetController.text = budget.name ?? '';
@@ -109,6 +109,17 @@ class _EditBudgetState extends State<EditBudget> {
       listen: false,
     );
     await budgetViewModel.loadCategories("expense");
+  }
+
+
+  Future<void> _loadAccountById() async {
+    final budgetViewModel = Provider.of<BudgetViewModel>(
+      context,
+      listen: false,
+    );
+    await budgetViewModel.loadAccountById(
+      budgetViewModel.budget!.accountId!,
+    );
   }
 
   /// Elimina el presupuesto con opción de devolver monto a la cuenta
@@ -171,6 +182,7 @@ class _EditBudgetState extends State<EditBudget> {
       context,
       listen: false,
     );
+    
 
     final categoryName = budgetViewModel.categories
         .where((category) => category.id == _categoryBudgetController.text)
@@ -248,6 +260,31 @@ class _EditBudgetState extends State<EditBudget> {
                             Expanded(
                               child: Text(
                                 "categoria: $categoryName",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+                    Card(
+                      color: AppColors.blush,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.account_balance, color: Colors.purple),
+                            const SizedBox(width: 16.0),
+                            Expanded(
+                              child: Text(
+                                "Cuenta asociada: ${budgetViewModel.accountById?.name ?? 'N/A'}",
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

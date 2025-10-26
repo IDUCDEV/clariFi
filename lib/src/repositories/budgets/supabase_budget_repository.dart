@@ -1,3 +1,4 @@
+import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/models/budget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -99,7 +100,7 @@ class SupabaseBudgetRepository {
     try {
       final response = await _supabaseClient
           .from('budgets')
-          .select('*, accounts(name), categories(name)')
+          .select('*')
           .eq('id', budgetId)
           .eq('user_id', userId)
           .single();
@@ -183,7 +184,6 @@ class SupabaseBudgetRepository {
       endDate: endDate,
       alertThreshold: alertThreshold,
     );
-
     final data = budget.toJson();
       // Excluir campos generados por la DB
     data.remove('amount');
@@ -191,6 +191,8 @@ class SupabaseBudgetRepository {
     data.remove('category_id');
     data.remove('account_id');
     data.remove('created_at');
+    data.remove('spent_amount');
+    data.remove('available_amount');
     
     try {
       await _supabaseClient
@@ -336,6 +338,31 @@ class SupabaseBudgetRepository {
       await updateAccountBalance(accountId, amount);
     } catch (e) {
       throw Exception('Error al asignar presupuesto a la cuenta: $e');
+    }
+  }
+
+
+  // esta funcion permite obtener la cuenta asociada al presupuesto para mostrarla en la UI de editar presupuesto
+  Future<AccountModel?> getAccountById(String accountId) async {
+    try {
+      final userId = _currentUserId;
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+      
+      final response = await _supabaseClient
+          .from('accounts')
+          .select()
+          .eq('id', accountId)
+          .eq('user_id', userId)
+          .maybeSingle();
+      
+      if (response == null) return null;
+      
+      return AccountModel.fromJson(response);
+      
+    } catch (e) {
+      throw Exception('Error al obtener cuenta: $e');
     }
   }
 }
