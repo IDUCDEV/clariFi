@@ -71,10 +71,12 @@ class _EditBudgetState extends State<EditBudget> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadBudget();
-      _loadCategories();
-      _loadAccountById();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadBudget();
+      await _loadCategories();
+      // Esperar un poco para asegurar que el presupuesto esté completamente cargado
+      await Future.delayed(const Duration(milliseconds: 100));
+      await _loadAccountById();
     });
   }
 
@@ -111,15 +113,14 @@ class _EditBudgetState extends State<EditBudget> {
     await budgetViewModel.loadCategories("expense");
   }
 
-
   Future<void> _loadAccountById() async {
     final budgetViewModel = Provider.of<BudgetViewModel>(
       context,
       listen: false,
     );
-    await budgetViewModel.loadAccountById(
-      budgetViewModel.budget!.accountId!,
-    );
+    if (budgetViewModel.budget?.accountId != null) {
+      await budgetViewModel.loadAccountById(budgetViewModel.budget!.accountId!);
+    }
   }
 
   /// Elimina el presupuesto con opción de devolver monto a la cuenta
@@ -137,7 +138,7 @@ class _EditBudgetState extends State<EditBudget> {
       builder: (context) => DeleteBudgetDialog(
         budgetName: budgetViewModel.budget?.name ?? '',
         budgetAmount: budgetViewModel.budget?.amount ?? 0.0,
-        accountCurrency: 'USD', // Asumiendo USD por defecto, ajustar según necesidad
+        accountCurrency:'USD', // Asumiendo USD por defecto, ajustar según necesidad
         otherBudgets: otherBudgets,
       ),
     );
@@ -178,303 +179,321 @@ class _EditBudgetState extends State<EditBudget> {
 
   @override
   Widget build(BuildContext context) {
-    final budgetViewModel = Provider.of<BudgetViewModel>(
-      context,
-      listen: false,
-    );
-    
+    return Consumer<BudgetViewModel>(
+      builder: (context, budgetViewModel, child) {
+        print(
+          'DEBUG: Consumer build - accountById: ${budgetViewModel.accountById?.name}',
+        );
 
-    final categoryName = budgetViewModel.categories
-        .where((category) => category.id == _categoryBudgetController.text)
-        .map((category) => category.name)
-        .firstOrNull;
+        final categoryName = budgetViewModel.categories
+            .where((category) => category.id == _categoryBudgetController.text)
+            .map((category) => category.name)
+            .firstOrNull;
 
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.cancel),
-            onPressed: () {
-              GoRouter.of(context).go('/budgets');
-            },
-          ),
-          title: const Text('Editar Presupuesto'),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.cancel),
-          onPressed: () {
-            GoRouter.of(context).go('/budgets');
-          },
-        ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Editar Presupuesto', textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameBudgetController,
-                      decoration: InputDecoration(
-                        labelText: 'Nombre del Presupuesto',
-                        border: const OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                        ),
-                        filled: true,
-                        fillColor: AppColors.blush,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor ingresa el nombre del presupuesto';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-                    Card(
-                      color: AppColors.blush,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.category, color: Colors.purple),
-                            const SizedBox(width: 16.0),
-                            Expanded(
-                              child: Text(
-                                "categoria: $categoryName",
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Card(
-                      color: AppColors.blush,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.account_balance, color: Colors.purple),
-                            const SizedBox(width: 16.0),
-                            Expanded(
-                              child: Text(
-                                "Cuenta asociada: ${budgetViewModel.accountById?.name ?? 'N/A'}",
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Card(
-                      color: AppColors.blush,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.monetization_on,
-                              color: Colors.purple,
-                            ),
-                            const SizedBox(width: 16.0),
-                            Expanded(
-                              child: Text(
-                                _amountController.text.isEmpty
-                                    ? 'Ingresa el monto del presupuesto'
-                                    : '\$${_amountController.text}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'Periodo',
-                  textAlign: TextAlign.left,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  segments: const <ButtonSegment<String>>[
-                    ButtonSegment(value: 'Mensual', label: Text('Mensual')),
-                    ButtonSegment(value: 'Semanal', label: Text('Semanal')),
-                    ButtonSegment(value: 'Anual', label: Text('Anual')),
-                  ],
-                  selected: <String>{
-                    _selectedPeriodo.isEmpty
-                        ? 'Mensual'
-                        : _selectedPeriodo == 'monthly'
-                        ? 'Mensual'
-                        : _selectedPeriodo == 'weekly'
-                        ? 'Semanal'
-                        : _selectedPeriodo == 'yearly'
-                        ? 'Anual'
-                        : _selectedPeriodo,
-                  },
-                  onSelectionChanged: (newSelection) {
-                    setState(() {
-                      _selectedPeriodo = newSelection.first;
-                    });
-                  },
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-                      (states) => states.contains(WidgetState.selected)
-                          ? Colors.purple
-                          : Colors.grey.shade200,
-                    ),
-                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                      (states) => states.contains(WidgetState.selected)
-                          ? Colors.white
-                          : Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    // Fecha de inicio
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _selectStartDate(context),
-                        icon: const Icon(Icons.calendar_today),
-                        label: Text("Inicio: ${formatDate(_startDate)}"),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-
-                    // Fecha de finalización
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _startDate == null
-                            ? null
-                            : () => _selectEndDate(context),
-                        icon: const Icon(Icons.calendar_today),
-                        label: Text("Fin: ${formatDate(_endDate)}"),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'Alerta de Umbrales',
-                  textAlign: TextAlign.left,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              //aqui va el widget
-              AlertThresholds(
-                selectedThreshold: _selectedThreshold,
-                onThresholdChanged: (value) {
-                  setState(() {
-                    _selectedThreshold = value;
-                  });
+        if (_isLoading) {
+          return Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.cancel),
+                onPressed: () {
+                  GoRouter.of(context).go('/budgets');
                 },
               ),
-              const SizedBox(height: 16.0),
-              PrimaryButton(
-                text: 'Guardar cambios',
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    // Lógica para guardar el presupuesto
-                    // Simular delay
-                    try {
-                      await budgetViewModel.updateBudget(
-                        id: widget.budgetId,
-                        name: _nameBudgetController.text,
-                        period: _selectedPeriodo == 'Mensual'
-                            ? 'monthly'
-                            : _selectedPeriodo == 'Semanal'
-                            ? 'weekly'
-                            : _selectedPeriodo == 'Anual'
-                            ? 'yearly'
-                            : _selectedPeriodo,
-                        startDate: _startDate ?? DateTime.now(),
-                        endDate:
-                            _endDate ??
-                            (_startDate ?? DateTime.now()).add(
-                              const Duration(days: 30),
+              title: const Text('Editar Presupuesto'),
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.cancel),
+              onPressed: () {
+                GoRouter.of(context).go('/budgets');
+              },
+            ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Editar Presupuesto', textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameBudgetController,
+                          decoration: InputDecoration(
+                            labelText: 'Nombre del Presupuesto',
+                            border: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(12.0),
+                              ),
                             ),
-                        alertThreshold: _selectedThreshold,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          backgroundColor: AppColors.success,
-                          content: Text(
-                            'Presupuesto actualizado exitosamente',
-                            style: TextStyle(color: Colors.black),
+                            filled: true,
+                            fillColor: AppColors.blush,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor ingresa el nombre del presupuesto';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16.0),
+                        Card(
+                          color: AppColors.blush,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.category,
+                                  color: Colors.purple,
+                                ),
+                                const SizedBox(width: 16.0),
+                                Expanded(
+                                  child: Text(
+                                    "categoria: $categoryName",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      );
-                      GoRouter.of(context).go('/budgets');
-                    } catch (e) {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(e.toString())));
-                    }
-                  }
-                },
+                        const SizedBox(height: 16.0),
+                        Card(
+                          color: AppColors.blush,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.account_balance,
+                                  color: Colors.purple,
+                                ),
+                                const SizedBox(width: 16.0),
+                                Expanded(
+                                  child: Text(
+                                    "Cuenta asociada: ${budgetViewModel.accountById?.name ?? 'Cargando...'}",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        Card(
+                          color: AppColors.blush,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.monetization_on,
+                                  color: Colors.purple,
+                                ),
+                                const SizedBox(width: 16.0),
+                                Expanded(
+                                  child: Text(
+                                    _amountController.text.isEmpty
+                                        ? 'Ingresa el monto del presupuesto'
+                                        : '\$${_amountController.text}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'Periodo',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<String>(
+                      segments: const <ButtonSegment<String>>[
+                        ButtonSegment(value: 'Mensual', label: Text('Mensual')),
+                        ButtonSegment(value: 'Semanal', label: Text('Semanal')),
+                        ButtonSegment(value: 'Anual', label: Text('Anual')),
+                      ],
+                      selected: <String>{
+                        _selectedPeriodo.isEmpty
+                            ? 'Mensual'
+                            : _selectedPeriodo == 'monthly'
+                            ? 'Mensual'
+                            : _selectedPeriodo == 'weekly'
+                            ? 'Semanal'
+                            : _selectedPeriodo == 'yearly'
+                            ? 'Anual'
+                            : _selectedPeriodo,
+                      },
+                      onSelectionChanged: (newSelection) {
+                        setState(() {
+                          _selectedPeriodo = newSelection.first;
+                        });
+                      },
+                      style: ButtonStyle(
+                        backgroundColor:
+                            WidgetStateProperty.resolveWith<Color?>(
+                              (states) => states.contains(WidgetState.selected)
+                                  ? Colors.purple
+                                  : Colors.grey.shade200,
+                            ),
+                        foregroundColor:
+                            WidgetStateProperty.resolveWith<Color?>(
+                              (states) => states.contains(WidgetState.selected)
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        // Fecha de inicio
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _selectStartDate(context),
+                            icon: const Icon(Icons.calendar_today),
+                            label: Text("Inicio: ${formatDate(_startDate)}"),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+
+                        // Fecha de finalización
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _startDate == null
+                                ? null
+                                : () => _selectEndDate(context),
+                            icon: const Icon(Icons.calendar_today),
+                            label: Text("Fin: ${formatDate(_endDate)}"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'Alerta de Umbrales',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  //aqui va el widget
+                  AlertThresholds(
+                    selectedThreshold: _selectedThreshold,
+                    onThresholdChanged: (value) {
+                      setState(() {
+                        _selectedThreshold = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  PrimaryButton(
+                    text: 'Guardar cambios',
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        // Lógica para guardar el presupuesto
+                        // Simular delay
+                        try {
+                          await budgetViewModel.updateBudget(
+                            id: widget.budgetId,
+                            name: _nameBudgetController.text,
+                            period: _selectedPeriodo == 'Mensual'
+                                ? 'monthly'
+                                : _selectedPeriodo == 'Semanal'
+                                ? 'weekly'
+                                : _selectedPeriodo == 'Anual'
+                                ? 'yearly'
+                                : _selectedPeriodo,
+                            startDate: _startDate ?? DateTime.now(),
+                            endDate:
+                                _endDate ??
+                                (_startDate ?? DateTime.now()).add(
+                                  const Duration(days: 30),
+                                ),
+                            alertThreshold: _selectedThreshold,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              backgroundColor: AppColors.success,
+                              content: Text(
+                                'Presupuesto actualizado exitosamente',
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                          );
+                          GoRouter.of(context).go('/budgets');
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(e.toString())));
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  SecondaryButton(
+                    text: 'Eliminar Presupuesto',
+                    onPressed: _deleteBudget,
+                  ),
+                ],
               ),
-              const SizedBox(height: 16.0),
-              SecondaryButton(
-                text: 'Eliminar Presupuesto',
-                onPressed: _deleteBudget,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

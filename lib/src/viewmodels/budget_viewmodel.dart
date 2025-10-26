@@ -232,11 +232,14 @@ class BudgetViewModel extends ChangeNotifier {
   // obtener cuenta asociada al presupuesto para mostrar en la UI de editar presupuesto
   Future<void> loadAccountById(String accountId) async {
     try {
+      print('DEBUG: loadAccountById - Iniciando carga de cuenta con ID: $accountId');
       _isLoading = true;
       _error = null;
       notifyListeners();
       _accountById = await _repository.getAccountById(accountId);
+      print('DEBUG: loadAccountById - Cuenta cargada exitosamente: ${_accountById?.name}');
     } catch (e) {
+      print('DEBUG: loadAccountById - Error al cargar cuenta: $e');
       _error = e.toString();
     } finally {
       _isLoading = false;
