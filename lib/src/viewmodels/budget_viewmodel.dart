@@ -79,7 +79,6 @@ class BudgetViewModel extends ChangeNotifier {
     try {
       // Verificar y asignar presupuesto a la cuenta
       await _repository.allocateBudgetToAccount(accountId, amount);
-
       // Crear el presupuesto
       await _repository.createBudget(
         name,

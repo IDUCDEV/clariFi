@@ -38,20 +38,21 @@ class SupabaseBudgetRepository {
         endDate: endDate,
         alertThreshold: alertThreshold,
         accountId: accountId,
+        availableAmount: amount,
+        spentAmount: 0.0,
       );
-
-      
-
       final data = budget.toJson();
       // Excluir campos generados por la DB
       data.remove('id');
       data.remove('created_at');
-
+      data.remove('available_amount'); // Remover campo que causa error
+      data.remove('spent_amount'); // Remover campo que causa error
       await _supabaseClient.from('budgets').insert(data);
-      
     } on PostgrestException catch (e) {
+      print('DEBUG: PostgrestException en createBudget: ${e.message}');
       throw Exception('Error creando presupuesto: ${e.message}');
     } catch (e) {
+      print('DEBUG: Exception general en createBudget: $e');
       throw Exception('Error creando presupuesto: $e');
     }
   }
@@ -69,7 +70,7 @@ class SupabaseBudgetRepository {
           .select('*, accounts(name), categories(name)')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
-          
+
       return response.map((json) {
         // Extraer el nombre de la cuenta del join
         final accountData = json['accounts'] as Map<String, dynamic>?;
@@ -147,13 +148,13 @@ class SupabaseBudgetRepository {
           .from('accounts')
           .select('balance')
           .eq('id', accountId)
-          .single();  
+          .single();
 
       final currentBalance = response['balance'] as num? ?? 0;
       final newBalance = currentBalance.toDouble() + amount;
 
       // Actualizar el saldo con el nuevo valor calculado
-      await _supabaseClient 
+      await _supabaseClient
           .from('accounts')
           .update({'balance': newBalance})
           .eq('id', accountId);
@@ -185,7 +186,7 @@ class SupabaseBudgetRepository {
       alertThreshold: alertThreshold,
     );
     final data = budget.toJson();
-      // Excluir campos generados por la DB
+    // Excluir campos generados por la DB
     data.remove('amount');
     data.remove('user_id');
     data.remove('category_id');
@@ -193,19 +194,15 @@ class SupabaseBudgetRepository {
     data.remove('created_at');
     data.remove('spent_amount');
     data.remove('available_amount');
-    
+
     try {
-      await _supabaseClient
-          .from('budgets')
-          .update(data)
-          .eq('id', budget.id!);
+      await _supabaseClient.from('budgets').update(data).eq('id', budget.id!);
     } on PostgrestException catch (e) {
       throw Exception('Error al actualizar presupuesto: ${e.message}');
     } catch (e) {
       throw Exception('Error al actualizar presupuesto: $e');
     }
   }
-
 
   Future<num> getTotalSpentAmount() async {
     final userId = _currentUserId;
@@ -224,12 +221,13 @@ class SupabaseBudgetRepository {
           .map((item) => item['spent_amount'] as num? ?? 0)
           .toList();
 
-      final totalSpent = spentAmounts.fold<num>(0, (prev, element) => prev + element);
+      final totalSpent = spentAmounts.fold<num>(
+        0,
+        (prev, element) => prev + element,
+      );
       return totalSpent;
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Error al obtener el total gastado: ${e.message}',
-      );
+      throw Exception('Error al obtener el total gastado: ${e.message}');
     } catch (e) {
       throw Exception('Error al obtener el total gastado: $e');
     }
@@ -328,19 +326,22 @@ class SupabaseBudgetRepository {
   // Método unificado para verificar y actualizar el balance de la cuenta para un presupuesto
   Future<void> allocateBudgetToAccount(String accountId, double amount) async {
     try {
+      
       // Verificar si el saldo es suficiente
       final canAllocate = await canAllocateBudget(accountId, amount);
       if (!canAllocate) {
-        throw Exception('Saldo insuficiente en la cuenta para asignar el presupuesto');
+        throw Exception(
+          'Saldo insuficiente en la cuenta para asignar el presupuesto',
+        );
       }
 
       // Si es suficiente, actualizar el balance
       await updateAccountBalance(accountId, amount);
     } catch (e) {
+      //print('DEBUG: Error en allocateBudgetToAccount: $e');
       throw Exception('Error al asignar presupuesto a la cuenta: $e');
     }
   }
-
 
   // esta funcion permite obtener la cuenta asociada al presupuesto para mostrarla en la UI de editar presupuesto
   Future<AccountModel?> getAccountById(String accountId) async {
@@ -349,18 +350,17 @@ class SupabaseBudgetRepository {
       if (userId == null) {
         throw Exception('Usuario no autenticado');
       }
-      
+
       final response = await _supabaseClient
           .from('accounts')
           .select()
           .eq('id', accountId)
           .eq('user_id', userId)
           .maybeSingle();
-      
+
       if (response == null) return null;
-      
+
       return AccountModel.fromJson(response);
-      
     } catch (e) {
       throw Exception('Error al obtener cuenta: $e');
     }
