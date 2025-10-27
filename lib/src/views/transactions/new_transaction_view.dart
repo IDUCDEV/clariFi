@@ -5,6 +5,7 @@ import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/budget_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
@@ -29,17 +30,6 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
   static const int maxNoteLength = 20;
 
   bool linkToBudget = false;
-
-  /// Fake budgets (hasta que tu compañero conecte servicio real)
-  // final List<Map<String, String>> fakeBudgets = [
-  //   {'id': 'b679dc71-5a15-49cf-9fc0-56e5e3ece7e1', 'name': 'Comidas'},
-  //   {'id': Uuid().v4(), 'name': 'Transporte'},
-  //   {'id': Uuid().v4(), 'name': 'Casa'},
-  // ];
-
-
-  // List<Map<String, String>> budgets = [];
-  // bool budgetsLoading = false;
 
   @override
   void initState() {
@@ -123,24 +113,25 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                 ),
                 const SizedBox(width: 4),
                 SizedBox(
-                  width: 160,
-                  child: TextField(
-                    controller: amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.onSecondary,
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: "0.00",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ],
+  width: 160,
+  child: TextField(
+    controller: amountController,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    inputFormatters: [
+      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
+    ],
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 40,
+      fontWeight: FontWeight.bold,
+      color: AppColors.onSecondary,
+    ),
+    decoration: const InputDecoration(
+      hintText: "0.00",
+      border: InputBorder.none,
+    ),
+  ),
+),   ],
             ),
 
             const SizedBox(height: 20),
@@ -417,10 +408,9 @@ budgetId: linkToBudget ? _cleanId(selectedBudgetId) : null,
 
       Navigator.pop(context);
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(e.toString())),
+    );
     }
   }
 }

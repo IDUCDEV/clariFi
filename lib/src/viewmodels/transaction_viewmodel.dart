@@ -188,17 +188,12 @@ Future<void> refreshTransactions() async {
       _isLoading = true;
       notifyListeners();
 
-      print('🟣 [VM] Intentando guardar transacción...');
-      print('🟢 [VM] Datos enviados: ${transaction.toJson()}');
-
       await _repository.createTransaction(transaction);
       await loadTransactions();
 
-      print('✅ [VM] Transacción creada correctamente');
-    } catch (e, stack) {
-      print('🔴 [VM] Error al crear transacción: $e');
-      print('📜 Stacktrace: $stack');
-      _errorMessage = e.toString();
+    } catch (e) {
+    debugPrint('🔴 [VM] Error al crear transacción: $e');
+    rethrow; // ⚠️ Reenviamos el error para que la vista pueda mostrarlo
     } finally {
       _isLoading = false;
       notifyListeners();

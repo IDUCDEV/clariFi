@@ -112,53 +112,53 @@ class _DeleteTransactionViewState extends State<DeleteTransactionView> {
               ),
 
             const SizedBox(height: 24),
-            Row(
-              children: [
-                const Text(
-                  'Transferir saldo',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                Checkbox(
-                  value: transferBalance,
-                  onChanged: (v) =>
-                      setState(() => transferBalance = v ?? false),
-                  activeColor: AppColors.primary,
-                ),
-              ],
-            ),
+            // Row(
+            //   children: [
+            //     const Text(
+            //       'Transferir saldo',
+            //       style: TextStyle(fontWeight: FontWeight.w600),
+            //     ),
+            //     const Spacer(),
+            //     Checkbox(
+            //       value: transferBalance,
+            //       onChanged: (v) =>
+            //           setState(() => transferBalance = v ?? false),
+            //       activeColor: AppColors.primary,
+            //     ),
+            //   ],
+            // ),
 
-            if (transferBalance)
-              DropdownButtonFormField<String>(
-                value: selectedAccount,
-                decoration: InputDecoration(
-                  labelText: 'Transferir a',
-                  filled: true,
-                  fillColor: AppColors.lightPurple.withOpacity(0.3),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                items: accounts.isNotEmpty
-                    ? accounts
-                        .map(
-                          (acc) => DropdownMenuItem<String>(
-                            value: acc.id,
-                            child: Text(acc.name),
-                          ),
-                        )
-                        .toList()
-                    : const [
-                        DropdownMenuItem(
-                          value: null,
-                          child: Text('No hay cuentas disponibles'),
-                        ),
-                      ],
-                onChanged: (value) => setState(() => selectedAccount = value),
-              ),
+            // if (transferBalance)
+            //   DropdownButtonFormField<String>(
+            //     value: selectedAccount,
+            //     decoration: InputDecoration(
+            //       labelText: 'Transferir a',
+            //       filled: true,
+            //       fillColor: AppColors.lightPurple.withOpacity(0.3),
+            //       border: OutlineInputBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //         borderSide: BorderSide.none,
+            //       ),
+            //     ),
+            //     items: accounts.isNotEmpty
+            //         ? accounts
+            //             .map(
+            //               (acc) => DropdownMenuItem<String>(
+            //                 value: acc.id,
+            //                 child: Text(acc.name),
+            //               ),
+            //             )
+            //             .toList()
+            //         : const [
+            //             DropdownMenuItem(
+            //               value: null,
+            //               child: Text('No hay cuentas disponibles'),
+            //             ),
+            //           ],
+            //     onChanged: (value) => setState(() => selectedAccount = value),
+            //   ),
 
-            const Spacer(),
+            // const Spacer(),
 
             // ✅ BOTÓN ELIMINAR FUNCIONAL
             SizedBox(
