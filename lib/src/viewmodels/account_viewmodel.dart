@@ -13,11 +13,13 @@ class AccountViewModel extends ChangeNotifier {
   List<AccountModel> _accounts = [];
   bool _isLoading = false;
   String? _errorMessage;
+  DateTime? _lastUpdated;
   
   // Getters
   List<AccountModel> get accounts => _accounts;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  DateTime? get lastUpdated => _lastUpdated;
   bool get hasError => _errorMessage != null;
   bool get hasAccounts => _accounts.isNotEmpty;
   
@@ -37,6 +39,7 @@ class AccountViewModel extends ChangeNotifier {
     
     try {
       _accounts = await _repository.getAccounts();
+      _lastUpdated = DateTime.now();
       notifyListeners();
     } catch (e) {
       _setError('Error al cargar cuentas: $e');

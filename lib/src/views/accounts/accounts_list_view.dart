@@ -4,6 +4,7 @@ import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:clarifi_app/src/views/accounts/create_account_view.dart';
 import 'package:clarifi_app/src/views/accounts/account_detail_view.dart';
+import 'package:clarifi_app/src/views/accounts/consolidated_summary_view.dart';
 import 'package:clarifi_app/src/constants/app_constants.dart';
 import 'package:clarifi_app/src/services/currency_conversion_service.dart';
 import 'dart:developer' as developer;
@@ -257,8 +258,18 @@ class _AccountsListViewState extends State<AccountsListView> {
   Widget _buildTotalBalanceCard(List<AccountModel> accounts) {
     final totalBalance = _calculateTotalBalance(accounts);
     
-    return Container(
-      width: double.infinity,
+    return InkWell(
+      onTap: () async {
+        // Abrir pantalla de resumen consolidado (la vista toma las cuentas desde el ViewModel
+        // para que se actualice en tiempo real cuando cambien los saldos)
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ConsolidatedSummaryView(),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -300,6 +311,7 @@ class _AccountsListViewState extends State<AccountsListView> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
