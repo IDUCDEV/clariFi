@@ -292,12 +292,27 @@ class _TransactionsListViewState extends State<TransactionsListView> {
                           date: item.date,
                           amount: item.amount,
                           type: item.type,
-                          onTap: () async {
-                            final updated = await context.push(
-                              '/transactions/edit/${item.id}',
-                            );
-                            if (updated == true) await vm.loadTransactions();
-                          },
+                         onTap: () async {
+  // Si es transferencia, ir a TransferScreen con datos precargados (modo editar)
+  if (item.transferId != null) {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TransferScreen(transferId: item.transferId),
+      ),
+    );
+    if (updated == true) {
+      await vm.loadTransactions();
+    }
+    return;
+  }
+
+  // Si no es transferencia → ir a pantalla de edición normal (tu ruta con go_router)
+  final updated = await context.push('/transactions/edit/${item.id}');
+  if (updated == true) await vm.loadTransactions();
+},
+
+
                         );
                       } else {
                         return const Padding(

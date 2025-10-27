@@ -231,20 +231,6 @@ Future<void> updateTransaction(TransactionModel transaction) async {
   }
 }
 
-  // Future<void> deleteTransaction(String id) async {
-  //   try {
-  //     await _repository.deleteTransaction(id);
-  //     _allTransactions.removeWhere((t) => t.id == id);
-  //     _filteredTransactions.removeWhere((t) => t.id == id);
-  //     notifyListeners();
-  //   } catch (e) {
-  //     _errorMessage = e.toString();
-  //     notifyListeners();
-  //   }
-  // }
-  // ============================================================
-// DELETE sincronizado para transferencias
-// ============================================================
 Future<void> deleteTransaction(String id) async {
   try {
     final tx = getTransactionById(id);
@@ -326,4 +312,53 @@ Future<void> transferBetweenAccountsVm( String fromAccountId, String toAccountId
     notifyListeners();
   }
 }
+
+Future<Map<String, dynamic>> getTransferPairById(String transferId) async {
+  try {
+    return await _repository.getTransferPair(transferId);
+  } catch (e) {
+    throw Exception("Error obteniendo pareja de transferencia: $e");
+  }
+}
+
+
+Future<void> updateTransferPairVm(
+  String transferId,
+  double amount,
+  String? note,
+  DateTime date,
+) async {
+  try {
+    _isLoading = true;
+    notifyListeners();
+
+    final tx = TransactionModel(
+      id: '',
+      amount: amount,
+      note: note,
+      type: '',
+      accountId: '',
+      date: date,
+      transferId: transferId,
+    );
+
+    await _repository.updateTransferPair(tx);
+
+    await loadTransactions();
+  } catch (e) {
+    _errorMessage = e.toString();
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+Future<void> deleteTransferPairVm(String transferId) async {
+  try {
+    await _repository.deleteTransferPair(transferId);
+    await loadTransactions();
+  } catch (e) {
+    _errorMessage = e.toString();
+  }
+}
+
 }

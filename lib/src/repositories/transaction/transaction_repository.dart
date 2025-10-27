@@ -18,4 +18,7 @@ abstract class TransactionRepository {
   Future<TransactionModel?> getPartnerTransfer(String id, String transferId);
   Future<void> deleteTransferPair(String transferId);
   Future<void> updateTransferPair(TransactionModel tx);
+  Future<Map<String, dynamic>> getAccountsBalances(String accountId);
+  Future<Map<String, double>> getAccountsBalances2(String fromId, String toId);
+  Future<Map<String, dynamic>> getTransferPair(String transferId);
 }
