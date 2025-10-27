@@ -200,27 +200,80 @@ Future<void> refreshTransactions() async {
     }
   }
 
-  Future<void> updateTransaction(TransactionModel transaction) async {
-    try {
+  // Future<void> updateTransaction(TransactionModel transaction) async {
+  //   try {
+  //     await _repository.updateTransaction(transaction);
+  //     await loadTransactions();
+  //   } catch (e) {
+  //     _errorMessage = e.toString();
+  //     notifyListeners();
+  //   }
+  // }
+// ============================================================
+// UPDATE sincronizado para transferencias
+// ============================================================
+Future<void> updateTransaction(TransactionModel transaction) async {
+  try {
+    // Si NO es transferencia → se actualiza normal
+    if (transaction.transferId == null) {
       await _repository.updateTransaction(transaction);
       await loadTransactions();
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
+      return;
     }
-  }
 
-  Future<void> deleteTransaction(String id) async {
-    try {
+    // Si es transferencia → actualizar ambas transacciones
+    await _repository.updateTransferPair(transaction);
+    await loadTransactions();
+    notifyListeners();
+  } catch (e) {
+    _errorMessage = e.toString();
+    notifyListeners();
+  }
+}
+
+  // Future<void> deleteTransaction(String id) async {
+  //   try {
+  //     await _repository.deleteTransaction(id);
+  //     _allTransactions.removeWhere((t) => t.id == id);
+  //     _filteredTransactions.removeWhere((t) => t.id == id);
+  //     notifyListeners();
+  //   } catch (e) {
+  //     _errorMessage = e.toString();
+  //     notifyListeners();
+  //   }
+  // }
+  // ============================================================
+// DELETE sincronizado para transferencias
+// ============================================================
+Future<void> deleteTransaction(String id) async {
+  try {
+    final tx = getTransactionById(id);
+
+    // Si NO existe
+    if (tx == null) return;
+
+    // Si NO es transferencia → normal
+    if (tx.transferId == null) {
       await _repository.deleteTransaction(id);
       _allTransactions.removeWhere((t) => t.id == id);
       _filteredTransactions.removeWhere((t) => t.id == id);
       notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
+      return;
     }
+
+    // Si es transferencia → eliminar ambas
+    await _repository.deleteTransferPair(tx.transferId!);
+
+    // Borra ambas en memoria
+    _allTransactions.removeWhere((t) => t.transferId == tx.transferId);
+    _filteredTransactions.removeWhere((t) => t.transferId == tx.transferId);
+
+    notifyListeners();
+  } catch (e) {
+    _errorMessage = e.toString();
+    notifyListeners();
   }
+}
 
   // ============================================================
   // Cargar categorías por tipo

@@ -307,5 +307,49 @@ Future<void> transferBetweenAccounts( String fromAccountId, String toAccountId, 
     throw Exception('Error al transferir: $e');
   }
 }
+// ============================================================
+// OBTENER la pareja de transferencia
+// ============================================================
+@override
+Future<TransactionModel?> getPartnerTransfer(String id, String transferId) async {
+  final res = await _supabase
+      .from('transactions')
+      .select()
+      .eq('transfer_id', transferId)
+      .neq('id', id)
+      .maybeSingle();
 
+  if (res == null) return null;
+  return TransactionModel.fromJson(res);
+}
+// ============================================================
+// UPDATE de ambas transferencias
+// ============================================================
+@override
+Future<void> updateTransferPair(TransactionModel tx) async {
+  try {
+    await _supabase.rpc('update_transfer_pair', params: {
+    'p_transfer_id': tx.transferId,
+    'p_amount': tx.amount,
+    'p_note': tx.note,
+    'p_date': tx.date.toIso8601String(),
+  });
+  } catch (e) {
+    throw Exception("Error al actualizar transferencia vinculada: $e");
+  }
+}
+
+// ============================================================
+// DELETE ambas transferencias por transferId
+// ============================================================
+@override
+Future<void> deleteTransferPair(String transferId) async {
+  try {
+    await _supabase.rpc('delete_transfer_pair', params: {
+    'p_transfer_id': transferId,
+  });
+  } catch (e) {
+    throw Exception("Error al eliminar transferencia vinculada: $e");
+  }
+}
 }

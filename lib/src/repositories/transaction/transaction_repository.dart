@@ -15,4 +15,7 @@ abstract class TransactionRepository {
     double amount,
     String? note,
   );
+  Future<TransactionModel?> getPartnerTransfer(String id, String transferId);
+  Future<void> deleteTransferPair(String transferId);
+  Future<void> updateTransferPair(TransactionModel tx);
 }
