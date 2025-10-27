@@ -248,4 +248,29 @@ Future<void> refreshTransactions() async {
     return null;
   }
 }
+Future<void> transferBetweenAccountsVm( String fromAccountId, String toAccountId, double amount,
+  String? note,
+) async {
+  _isLoading = true;
+  _errorMessage = null;
+  notifyListeners();
+
+  try {
+    await _repository.transferBetweenAccounts(fromAccountId, toAccountId, amount, note) ;
+
+    // Recargar cuentas y transacciones (si tienes esos métodos)
+    await loadTransactions();
+    // await accountViewModel.loadAccounts();
+
+  } catch (e) {
+    if (e.toString().contains('Saldo insuficiente')) {
+      _errorMessage = 'No hay suficiente saldo en la cuenta origen.';
+    } else {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+    }
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
 }

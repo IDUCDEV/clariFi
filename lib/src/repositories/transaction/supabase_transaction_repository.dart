@@ -248,105 +248,6 @@ Future<void> deleteTransaction(String transactionId) async {
   }
 }
 
-
-//   @override
-// Future<void> updateTransaction(TransactionModel newTransaction) async {
-//   try {
-//     final userId = _currentUserId;
-//     if (userId == null) throw Exception('Usuario no autenticado');
-
-//     // 1️⃣ Obtener la transacción anterior
-//     final oldTx = await _supabase
-//         .from('transactions')
-//         .select('account_id, type, amount')
-//         .eq('id', newTransaction.id)
-//         .single();
-
-//     final oldAccountId = oldTx['account_id'];
-//     final oldType = oldTx['type'];
-//     final oldAmount = (oldTx['amount'] as num).toDouble();
-
-//     // 2️⃣ Revertir el efecto anterior
-//     if (oldAccountId != null) {
-//       if (oldType == 'expense') {
-//         await _supabase.rpc('increase_account_amount', params: {
-//           'p_account_id': oldAccountId,
-//           'p_amount': oldAmount,
-//         });
-//       } else if (oldType == 'income') {
-//         await _supabase.rpc('decrease_account_amount', params: {
-//           'p_account_id': oldAccountId,
-//           'p_amount': oldAmount,
-//         });
-//       }
-//     }
-
-//     // 3️⃣ Actualizar la transacción
-//     await _supabase
-//         .from('transactions')
-//         .update(newTransaction.toJson())
-//         .eq('id', newTransaction.id);
-
-//     // 4️⃣ Aplicar el nuevo efecto
-//     if (newTransaction.accountId != null) {
-//       if (newTransaction.type == 'expense') {
-//         await _supabase.rpc('decrease_account_amount', params: {
-//           'p_account_id': newTransaction.accountId,
-//           'p_amount': newTransaction.amount,
-//         });
-//       } else if (newTransaction.type == 'income') {
-//         await _supabase.rpc('increase_account_amount', params: {
-//           'p_account_id': newTransaction.accountId,
-//           'p_amount': newTransaction.amount,
-//         });
-//       }
-//     }
-//   } catch (e) {
-//     throw Exception('Error al actualizar transacción: $e');
-//   }
-// }
-
-
-// @override
-// Future<void> deleteTransaction(String id) async {
-//   try {
-//     final userId = _currentUserId;
-//     if (userId == null) throw Exception('Usuario no autenticado');
-
-//     // 1️⃣ Buscar la transacción para saber su tipo, monto y cuenta
-//     final transaction = await _supabase
-//         .from('transactions')
-//         .select('id, account_id, type, amount')
-//         .eq('id', id)
-//         .single();
-
-//     final accountId = transaction['account_id'];
-//     final type = transaction['type'];
-//     final amount = (transaction['amount'] as num).toDouble();
-
-//     // 2️⃣ Revertir el impacto en la cuenta
-//     if (accountId != null) {
-//       if (type == 'expense') {
-//         await _supabase.rpc('increase_account_amount', params: {
-//           'p_account_id': accountId,
-//           'p_amount': amount,
-//         });
-//       } else if (type == 'income') {
-//         await _supabase.rpc('decrease_account_amount', params: {
-//           'p_account_id': accountId,
-//           'p_amount': amount,
-//         });
-//       }
-//     }
-
-//     // 3️⃣ Eliminar la transacción
-//     await _supabase.from('transactions').delete().eq('id', id);
-//   } catch (e) {
-//     throw Exception('Error al eliminar transacción: $e');
-//   }
-// }
-
-
   @override
   Future<TransactionModel?> getTransactionById(String id) async {
     try {
@@ -367,4 +268,44 @@ Future<void> deleteTransaction(String transactionId) async {
       throw Exception('Error al obtener transacción: $e');
     }
   }
+  // Dentro de SupabaseTransactionRepository
+@override
+Future<void> transferBetweenAccounts( String fromAccountId, String toAccountId, double amount,
+  String? note) async {
+  try {
+    // 1️⃣ Validar que no sea la misma cuenta
+    if (fromAccountId == toAccountId) {
+      throw Exception('No puedes transferir entre la misma cuenta.');
+    }
+
+    // 2️⃣ Validar que la cuenta origen tenga saldo suficiente
+    final fromAccount = await _supabase
+        .from('accounts')
+        .select('balance')
+        .eq('id', fromAccountId)
+        .maybeSingle();
+
+    if (fromAccount == null) {
+      throw Exception('Cuenta origen no encontrada.');
+    }
+
+    final currentBalance = (fromAccount['balance'] as num).toDouble();
+    if (currentBalance < amount) {
+      throw Exception('Saldo insuficiente en la cuenta origen.');
+    }
+
+    // 3️⃣ Ejecutar transferencia en Supabase (función RPC que tú defines)
+   await _supabase.rpc('transfer_between_accounts', params: {
+  'p_from_account_id': fromAccountId,
+  'p_to_account_id': toAccountId,
+  'p_amount': amount,
+  'p_note': note ?? '',
+});
+  } on PostgrestException catch (e) {
+    throw Exception('Error de base de datos: ${e.message}');
+  } catch (e) {
+    throw Exception('Error al transferir: $e');
+  }
+}
+
 }
