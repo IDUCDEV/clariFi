@@ -14,19 +14,19 @@ class DashboardBudgets extends StatefulWidget {
 }
 
 class _DashboardBudgetsState extends State<DashboardBudgets> {
-
-
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final budgetViewModel = Provider.of<BudgetViewModel>(context, listen: false);
+      final budgetViewModel = Provider.of<BudgetViewModel>(
+        context,
+        listen: false,
+      );
       budgetViewModel.loadBudgets();
       budgetViewModel.getTotalBudgetAmount();
+      budgetViewModel.getTotalSpentAmount();
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,9 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
                 if (hasAccounts == false) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Por favor, crea una cuenta antes de agregar un presupuesto.'),
+                      content: Text(
+                        'Por favor, crea una cuenta antes de agregar un presupuesto.',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -68,18 +70,20 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
           child: Column(
             children: [
               budgetViewModel.totalBudgetAmount == null
-              ? const CircularProgressIndicator()
-                  : 
-                Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Budgetsvisualizer(
-                    totalBudget: budgetViewModel.totalBudgetAmount ?? 0,
-                    title: "Total Presupuesto",
-                  ),
-                  Budgetsvisualizer(totalBudget: 8500, title: "Total Gastado"),
-                ],
-              ),
+                  ? const CircularProgressIndicator()
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Budgetsvisualizer(
+                          totalBudget: budgetViewModel.totalBudgetAmount ?? 0,
+                          title: "Total Presupuesto",
+                        ),
+                        Budgetsvisualizer(
+                          totalBudget: budgetViewModel.totalSpentAmount ?? 0,
+                          title: "Total Gastado",
+                        ),
+                      ],
+                    ),
               const SizedBox(height: 16.0),
               Align(
                 alignment: Alignment.centerLeft,
@@ -110,21 +114,21 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
               budgetViewModel.isLoading
                   ? const CircularProgressIndicator()
                   : budgetViewModel.error != null
-                      ? Text('Error: ${budgetViewModel.error}')
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: budgetViewModel.budgets.length,
-                          itemBuilder: (context, index) {
-                            final budget = budgetViewModel.budgets[index];
-                            return Budgetitemtolistbudgetdarshboard(
-                              id: budget.id ?? "",
-                              title: budget.name ?? "",
-                              budget: budget.amount.toString(),
-                              spent: "0",
-                            );
-                          },
-                        ),
+                  ? Text('Error: ${budgetViewModel.error}')
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: budgetViewModel.budgets.length,
+                      itemBuilder: (context, index) {
+                        final budget = budgetViewModel.budgets[index];
+                        return Budgetitemtolistbudgetdarshboard(
+                          id: budget.id ?? "",
+                          title: budget.name ?? "",
+                          budget: budget.amount.toString(),
+                          spent: budget.spentAmount.toString(),
+                        );
+                      },
+                    ),
               const SizedBox(height: 16.0),
             ],
           ),

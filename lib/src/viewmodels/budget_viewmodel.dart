@@ -1,3 +1,4 @@
+import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/models/budget.dart';
 import 'package:clarifi_app/src/models/category.dart';
 import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
@@ -29,9 +30,18 @@ class BudgetViewModel extends ChangeNotifier {
   //total presupuestario del usuario
   num? _totalBudgetAmount = 0.0;
   num? get totalBudgetAmount => _totalBudgetAmount;
+
+  //total gastado de todos los presupuestos
+  num? _totalSpentAmount = 0.0;
+  num? get totalSpentAmount => _totalSpentAmount;
   //lista de categorias
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
+
+  //cuenta asociada al presupuesto para mostrar en la UI
+  AccountModel? _accountById;
+  AccountModel? get accountById => _accountById;
+
 
   // Métodos para cargar datos
 
@@ -69,7 +79,6 @@ class BudgetViewModel extends ChangeNotifier {
     try {
       // Verificar y asignar presupuesto a la cuenta
       await _repository.allocateBudgetToAccount(accountId, amount);
-
       // Crear el presupuesto
       await _repository.createBudget(
         name,
@@ -166,6 +175,24 @@ class BudgetViewModel extends ChangeNotifier {
     }
   }
 
+
+  //aqui van todo lo gastado de todos los presupuestos
+  Future<void> getTotalSpentAmount() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _totalSpentAmount = await _repository.getTotalSpentAmount();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> getTotalBudgetAmount() async {
     _isLoading = true;
     _error = null;
@@ -195,6 +222,24 @@ class BudgetViewModel extends ChangeNotifier {
       notifyListeners();
       _categories = await _categoryRepository.fetchAllCategories(type: type);
     } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // obtener cuenta asociada al presupuesto para mostrar en la UI de editar presupuesto
+  Future<void> loadAccountById(String accountId) async {
+    try {
+      print('DEBUG: loadAccountById - Iniciando carga de cuenta con ID: $accountId');
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      _accountById = await _repository.getAccountById(accountId);
+      print('DEBUG: loadAccountById - Cuenta cargada exitosamente: ${_accountById?.name}');
+    } catch (e) {
+      print('DEBUG: loadAccountById - Error al cargar cuenta: $e');
       _error = e.toString();
     } finally {
       _isLoading = false;
