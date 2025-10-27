@@ -4,9 +4,10 @@ import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+
 
 class NewTransactionView extends StatefulWidget {
   final String type; // 'expense' o 'income'
@@ -339,8 +340,10 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
       return;
     }
 
+    
+
     final transaction = TransactionModel(
-      id: const Uuid().v4(),
+      id:  Uuid().v4(),
       userId: user.id,
       accountId: selectedAccountId!,
       categoryId: selectedCategoryId!,
