@@ -29,9 +29,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
             try {
               await widget.onPressed!();
             } finally {
-              
               setState(() => _isLoading = false);
-              
             }
           }
         },

@@ -6,6 +6,7 @@ class BudgetModel {
   final double? amount;
   final String? period;
   final String? userId;
+  final String? accountId;
   final String? categoryId;
   final DateTime? startDate;
   final DateTime? endDate;
@@ -18,6 +19,7 @@ class BudgetModel {
     this.amount,
     this.period,
     this.userId,
+    this.accountId,
     this.categoryId,
     this.startDate,
     this.endDate,
@@ -32,6 +34,7 @@ class BudgetModel {
       amount: json['amount'] != null ? (json['amount'] as num).toDouble() : null,
       period: json['period'] != null ? json['period'] as String : null,
       userId: json['user_id'] != null ? json['user_id'] as String : null,
+      accountId: json['account_id'] != null ? json['account_id'] as String : null,
       categoryId: json['category_id'] != null ? json['category_id'] as String : null,
       startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
       endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
@@ -47,6 +50,7 @@ class BudgetModel {
       'amount': amount,
       'period': period,
       'user_id': userId,
+      'account_id': accountId,
       'category_id': categoryId,
       'start_date': startDate?.toIso8601String().split('T').first,
       'end_date': endDate?.toIso8601String().split('T').first,

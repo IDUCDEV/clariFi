@@ -4,9 +4,8 @@ import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 
 class NewTransactionView extends StatefulWidget {
@@ -28,29 +27,43 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
   static const int maxNoteLength = 20;
 
+  bool linkToBudget = false;
+
+  /// Fake budgets (hasta que tu compañero conecte servicio real)
   final List<Map<String, String>> fakeBudgets = [
-    {'id': '1', 'name': 'Hogar'},
-    {'id': '2', 'name': 'Transporte'},
-    {'id': '3', 'name': 'Alimentación'},
-    {'id': '4', 'name': 'Entretenimiento'},
+    {'id': 'b679dc71-5a15-49cf-9fc0-56e5e3ece7e1', 'name': 'Comidas'},
+    {'id': Uuid().v4(), 'name': 'Transporte'},
+    {'id': Uuid().v4(), 'name': 'Casa'},
   ];
+
+  List<Map<String, String>> budgets = [];
+  bool budgetsLoading = false;
 
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TransactionViewModel>().loadCategories(widget.type);
       context.read<AccountViewModel>().loadAccounts();
+      _loadBudgetsFake();
     });
+
     noteController.addListener(() {
       if (noteController.text.length > maxNoteLength) {
-        noteController.text = noteController.text.substring(0, maxNoteLength);
+        noteController.text =
+            noteController.text.substring(0, maxNoteLength);
         noteController.selection = TextSelection.fromPosition(
           TextPosition(offset: noteController.text.length),
         );
       }
       setState(() {});
     });
+  }
+
+  Future<void> _loadBudgetsFake() async {
+    budgets = fakeBudgets;
+    if (mounted) setState(() {});
   }
 
   @override
@@ -79,7 +92,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          '$title',
+          title,
           style: const TextStyle(
             color: AppColors.onSecondary,
             fontWeight: FontWeight.bold,
@@ -96,7 +109,7 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
           children: [
             const SizedBox(height: 8),
 
-            // 💰 Monto centrado
+            // 💰 Monto
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -113,7 +126,8 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                   width: 160,
                   child: TextField(
                     controller: amountController,
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 40,
@@ -131,35 +145,75 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
             const SizedBox(height: 20),
 
-            // 🏷️ Categoría
-            if (vm.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else
-              _buildDropdown(
-                'Categoría',
-                selectedCategoryId,
-                vm.categories
-                    .map((c) => {'id': c.id, 'name': c.name})
-                    .toList(),
-                (value) => setState(() => selectedCategoryId = value),
-              ),
+            // SWITCH Presupuesto
+            SwitchListTile(
+              title: const Text("Asociar con presupuesto"),
+              value: linkToBudget,
+              onChanged: (val) {
+                setState(() {
+                  linkToBudget = val;
+                  selectedBudgetId = null;
+                  selectedAccountId = null;
+                  selectedCategoryId = null;
+                });
+              },
+              activeColor: AppColors.primary,
+            ),
 
             const SizedBox(height: 12),
 
-            // 🏦 Cuenta
-            if (vmAccounts.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else
-              _buildDropdown(
-                'Cuenta',
-                selectedAccountId,
-                vmAccounts.accounts
-                    .map((a) => {'id': a.id, 'name': a.name})
-                    .toList(),
-                (value) => setState(() => selectedAccountId = value),
-              ),
+            if (linkToBudget) ...[
+              if (budgets.isEmpty)
+                Column(
+                  children: [
+                    const Text("No hay presupuestos. Crea uno."),
+                    const SizedBox(height: 6),
+                    ElevatedButton(
+                      onPressed: () {},
+                      child: const Text("Crear presupuesto"),
+                    )
+                  ],
+                )
+              else
+                _buildDropdown(
+                  "Seleccionar presupuesto",
+                  selectedBudgetId,
+                  budgets,
+                  (v) => setState(() => selectedBudgetId = v),
+                ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ] else ...[
+              // Categoría
+              if (vm.isLoading)
+                const CircularProgressIndicator()
+              else
+                _buildDropdown(
+                  "Categoría",
+                  selectedCategoryId,
+                  vm.categories
+                      .map((c) => {'id': c.id, 'name': c.name})
+                      .toList(),
+                  (v) => setState(() => selectedCategoryId = v),
+                ),
+
+              const SizedBox(height: 12),
+
+              // Cuenta
+              if (vmAccounts.isLoading)
+                const CircularProgressIndicator()
+              else
+                _buildDropdown(
+                  "Cuenta",
+                  selectedAccountId,
+                  vmAccounts.accounts
+                      .map((a) => {'id': a.id, 'name': a.name})
+                      .toList(),
+                  (v) => setState(() => selectedAccountId = v),
+                ),
+
+              const SizedBox(height: 12),
+            ],
 
             // 📅 Fecha
             GestureDetector(
@@ -185,72 +239,30 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
             const SizedBox(height: 12),
 
-            // 📊 Asociar presupuesto
-            _buildDropdown(
-              'Asociar a un presupuesto',
-              selectedBudgetId,
-              fakeBudgets,
-              (value) => setState(() => selectedBudgetId = value),
-            ),
-
-            const SizedBox(height: 12),
-
             // 📝 Nota
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                TextField(
-                  controller: noteController,
-                  maxLength: maxNoteLength,
-                  decoration: InputDecoration(
-                    hintText: 'Añadir una nota (opcional)',
-                    counterText: '',
-                    filled: true,
-                    fillColor: AppColors.lightPurple,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 12,
-                  bottom: 8,
-                  child: Text(
-                    '${noteController.text.length}/$maxNoteLength',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: noteController.text.length >= maxNoteLength
-                          ? Colors.red
-                          : Colors.grey,
-                    ),
-                  ),
-                ),
-              ],
+            TextField(
+              controller: noteController,
+              maxLength: maxNoteLength,
+              decoration: InputDecoration(
+                hintText: 'Añadir nota (opcional)',
+                counterText: '',
+                filled: true,
+                fillColor: AppColors.lightPurple,
+                //borderRadius: BorderRadius.circular(12),
+                border: InputBorder.none,
+              ),
             ),
-
-            const SizedBox(height: 16),
-
-            // 🔁 Transacción recurrente (comentado)
-            /*
-            SwitchListTile(
-              title: const Text("Transacción recurrente"),
-              value: false,
-              onChanged: (val) {},
-              activeColor: AppColors.primary,
-            ),
-            */
 
             const SizedBox(height: 20),
 
-            // 💾 Botón Guardar
+            // 💾 Guardar
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.background,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -262,6 +274,8 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -298,15 +312,11 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
   }
 
   Future<void> _pickDate() async {
-    final today = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate ?? today,
+      initialDate: selectedDate ?? DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: today,
-      helpText: 'Seleccionar fecha de la transacción',
-      cancelText: 'Cancelar',
-      confirmText: 'Aceptar',
+      lastDate: DateTime.now(),
     );
 
     if (picked != null) {
@@ -316,59 +326,60 @@ class _NewTransactionScreenState extends State<NewTransactionView> {
 
   Future<void> _saveTransaction(BuildContext context) async {
     final vm = context.read<TransactionViewModel>();
-    final user = Supabase.instance.client.auth.currentUser;
-
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Usuario no autenticado')),
-      );
-      return;
-    }
-
-    if (selectedAccountId == null || selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione cuenta y categoría')),
-      );
-      return;
-    }
-
     final amount = double.tryParse(amountController.text) ?? 0;
+
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingrese un monto válido')),
+        const SnackBar(content: Text('Monto inválido')),
       );
       return;
     }
 
-    
+    if (linkToBudget) {
+      if (selectedBudgetId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seleccione presupuesto')),
+        );
+        return;
+      }
+    } else {
+      if (selectedAccountId == null || selectedCategoryId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seleccione categoría y cuenta')),
+        );
+        return;
+      }
+    }
 
-    final transaction = TransactionModel(
-      id:  Uuid().v4(),
-      userId: user.id,
-      accountId: selectedAccountId!,
-      categoryId: selectedCategoryId!,
-      type: widget.type,
-      amount: amount,
-      date: selectedDate ?? DateTime.now(),
-      note: noteController.text,
-      currency: "PEN",
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    final tx = TransactionModel(
+  id: const Uuid().v4(),
+  accountId: linkToBudget ? null : selectedAccountId,
+  categoryId: linkToBudget ? null : selectedCategoryId,
+  budgetId: linkToBudget ? selectedBudgetId : null,
+  type: widget.type,
+  amount: amount,
+  date: selectedDate ?? DateTime.now(),
+  note: noteController.text,
+  currency: "PEN",
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+);
 
     try {
-      await vm.addTransaction(transaction);
+      await vm.addTransaction(tx);
+
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Transacción guardada correctamente')),
+        const SnackBar(content: Text('✔️ Transacción guardada')),
       );
+
       Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 }

@@ -126,6 +126,7 @@ class _MyAppState extends State<MyApp> {
         ),
         ChangeNotifierProvider(create: (context)=> BudgetViewModel(
           SupabaseBudgetRepository(Supabase.instance.client),
+          SupabaseCategoryRepository(Supabase.instance.client),
         )),
       ],
       child: Builder(

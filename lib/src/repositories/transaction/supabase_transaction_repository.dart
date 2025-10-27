@@ -29,24 +29,59 @@ Future<List<TransactionModel>> getTransactions({int offset = 0, int limit = 20})
   }
 }
 
-
   @override
-  Future<void> createTransaction(TransactionModel transaction) async {
-    try {
-      final userId = _currentUserId;
-      if (userId == null) throw Exception('Usuario no autenticado');
+Future<void> createTransaction(TransactionModel transaction) async {
+  try {
+    final userId = _currentUserId;
+    if (userId == null) throw Exception('Usuario no autenticado');
 
-      final data = transaction.toJson()..remove('id');
-      data['user_id'] = userId;
-      final response = await _supabase
-          .from('transactions')
-          .insert(data)
-          .select()
-          .single();
-    } catch (e) {
-      throw Exception('Error al crear transacción: $e');
+    final data = transaction.toJson()..remove('id');
+    data['user_id'] = userId;
+
+    // 1️⃣ Insertar la transacción
+    final response = await _supabase
+        .from('transactions')
+        .insert(data)
+        .select()
+        .single();
+
+    // 2️⃣ Si está asociado a presupuesto, resta del presupuesto disponible
+    if (transaction.budgetId != null) {
+      await _supabase.rpc(
+        'subtract_from_budget',
+        params: {
+          'p_budget_id': transaction.budgetId,
+          'p_amount': transaction.amount
+        },
+      );
     }
+
+    // 3️⃣ Si NO tiene presupuesto, actualizar la cuenta
+    if (transaction.budgetId == null && transaction.accountId != null) {
+      if (transaction.type == 'expense') {
+        await _supabase.rpc(
+          'decrease_account_amount',
+          params: {
+            'p_account_id': transaction.accountId,
+            'p_amount': transaction.amount
+          },
+        );
+      } else {
+        await _supabase.rpc(
+          'increase_account_amount',
+          params: {
+            'p_account_id': transaction.accountId,
+            'p_amount': transaction.amount
+          },
+        );
+      }
+    }
+
+  } catch (e) {
+    throw Exception('Error al crear transacción: $e');
   }
+}
+
 
   @override
   Future<void> updateTransaction(TransactionModel transaction) async {

@@ -39,7 +39,18 @@ class _DashboardBudgetsState extends State<DashboardBudgets> {
           children: [
             const Text('Presupuestos', textAlign: TextAlign.center),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final hasAccounts = await budgetViewModel.hasAccounts();
+
+                if (hasAccounts == false) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor, crea una cuenta antes de agregar un presupuesto.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
                 GoRouter.of(context).go('/addBudget');
               },
               child: const Icon(
