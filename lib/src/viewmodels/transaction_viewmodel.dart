@@ -188,44 +188,78 @@ Future<void> refreshTransactions() async {
       _isLoading = true;
       notifyListeners();
 
-      print('🟣 [VM] Intentando guardar transacción...');
-      print('🟢 [VM] Datos enviados: ${transaction.toJson()}');
-
       await _repository.createTransaction(transaction);
       await loadTransactions();
 
-      print('✅ [VM] Transacción creada correctamente');
-    } catch (e, stack) {
-      print('🔴 [VM] Error al crear transacción: $e');
-      print('📜 Stacktrace: $stack');
-      _errorMessage = e.toString();
+    } catch (e) {
+    debugPrint('🔴 [VM] Error al crear transacción: $e');
+    rethrow; // ⚠️ Reenviamos el error para que la vista pueda mostrarlo
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> updateTransaction(TransactionModel transaction) async {
-    try {
+  // Future<void> updateTransaction(TransactionModel transaction) async {
+  //   try {
+  //     await _repository.updateTransaction(transaction);
+  //     await loadTransactions();
+  //   } catch (e) {
+  //     _errorMessage = e.toString();
+  //     notifyListeners();
+  //   }
+  // }
+// ============================================================
+// UPDATE sincronizado para transferencias
+// ============================================================
+Future<void> updateTransaction(TransactionModel transaction) async {
+  try {
+    // Si NO es transferencia → se actualiza normal
+    if (transaction.transferId == null) {
       await _repository.updateTransaction(transaction);
       await loadTransactions();
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
+      return;
     }
-  }
 
-  Future<void> deleteTransaction(String id) async {
-    try {
+    // Si es transferencia → actualizar ambas transacciones
+    await _repository.updateTransferPair(transaction);
+    await loadTransactions();
+    notifyListeners();
+  } catch (e) {
+    _errorMessage = e.toString();
+    notifyListeners();
+  }
+}
+
+Future<void> deleteTransaction(String id) async {
+  try {
+    final tx = getTransactionById(id);
+
+    // Si NO existe
+    if (tx == null) return;
+
+    // Si NO es transferencia → normal
+    if (tx.transferId == null) {
       await _repository.deleteTransaction(id);
       _allTransactions.removeWhere((t) => t.id == id);
       _filteredTransactions.removeWhere((t) => t.id == id);
       notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
+      return;
     }
+
+    // Si es transferencia → eliminar ambas
+    await _repository.deleteTransferPair(tx.transferId!);
+
+    // Borra ambas en memoria
+    _allTransactions.removeWhere((t) => t.transferId == tx.transferId);
+    _filteredTransactions.removeWhere((t) => t.transferId == tx.transferId);
+
+    notifyListeners();
+  } catch (e) {
+    _errorMessage = e.toString();
+    notifyListeners();
   }
+}
 
   // ============================================================
   // Cargar categorías por tipo
@@ -253,4 +287,78 @@ Future<void> refreshTransactions() async {
     return null;
   }
 }
+Future<void> transferBetweenAccountsVm( String fromAccountId, String toAccountId, double amount,
+  String? note,
+) async {
+  _isLoading = true;
+  _errorMessage = null;
+  notifyListeners();
+
+  try {
+    await _repository.transferBetweenAccounts(fromAccountId, toAccountId, amount, note) ;
+
+    // Recargar cuentas y transacciones (si tienes esos métodos)
+    await loadTransactions();
+    // await accountViewModel.loadAccounts();
+
+  } catch (e) {
+    if (e.toString().contains('Saldo insuficiente')) {
+      _errorMessage = 'No hay suficiente saldo en la cuenta origen.';
+    } else {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+    }
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+
+Future<Map<String, dynamic>> getTransferPairById(String transferId) async {
+  try {
+    return await _repository.getTransferPair(transferId);
+  } catch (e) {
+    throw Exception("Error obteniendo pareja de transferencia: $e");
+  }
+}
+
+
+Future<void> updateTransferPairVm(
+  String transferId,
+  double amount,
+  String? note,
+  DateTime date,
+) async {
+  try {
+    _isLoading = true;
+    notifyListeners();
+
+    final tx = TransactionModel(
+      id: '',
+      amount: amount,
+      note: note,
+      type: '',
+      accountId: '',
+      date: date,
+      transferId: transferId,
+    );
+
+    await _repository.updateTransferPair(tx);
+
+    await loadTransactions();
+  } catch (e) {
+    _errorMessage = e.toString();
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+Future<void> deleteTransferPairVm(String transferId) async {
+  try {
+    await _repository.deleteTransferPair(transferId);
+    await loadTransactions();
+  } catch (e) {
+    _errorMessage = e.toString();
+  }
+}
+
 }

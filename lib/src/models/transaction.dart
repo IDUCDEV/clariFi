@@ -12,8 +12,7 @@ class TransactionModel {
   final Map<String, dynamic>? metadata;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-
-  // Campos adicionales por joins
+  final String? transferId;
   final String? accountName;
   final String? categoryName;
 
@@ -33,6 +32,7 @@ class TransactionModel {
     this.updatedAt,
     this.accountName,
     this.categoryName,
+    this.transferId,
   });
 
   TransactionModel copyWith({
@@ -51,6 +51,7 @@ class TransactionModel {
     DateTime? updatedAt,
     String? accountName,
     String? categoryName,
+    String? transferId,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -68,6 +69,7 @@ class TransactionModel {
       updatedAt: updatedAt ?? this.updatedAt,
       accountName: accountName ?? this.accountName,
       categoryName: categoryName ?? this.categoryName,
+      transferId: transferId ?? this.transferId,
     );
   }
 
@@ -105,6 +107,7 @@ class TransactionModel {
       updatedAt: _parseNullableDate(json['updated_at']),
       accountName: accountName,
       categoryName: categoryName,
+      transferId: json['transfer_id'],
     );
   }
 
@@ -123,6 +126,7 @@ class TransactionModel {
       'metadata': metadata,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      'transfer_id': transferId,
     };
   }
 
