@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SupabaseService _supabaseService;
+  String ? get userEmail => _supabaseService.supabase.auth.currentUser?.email;
+  String ? get userName => _supabaseService.supabase.auth.currentUser?.userMetadata?['full_name'];
   bool _isAuthenticated = false;
   bool get isAuthenticated => _isAuthenticated;
 

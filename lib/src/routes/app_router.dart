@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:clarifi_app/src/views/settings/profile_view.dart';
 
 class AppRouter {
   final AuthViewModel authViewModel;
@@ -190,6 +191,10 @@ class AppRouter {
           path: '/templatesBudgets',
           builder: (context, state) => const BudgetTemplateScreen(),
         ),
+        GoRoute(
+  path: '/profile',
+  builder: (context, state) => const ProfileView(),
+),
       ],
       redirect: (context, state) {
         final bool loggedIn = authViewModel.isAuthenticated;

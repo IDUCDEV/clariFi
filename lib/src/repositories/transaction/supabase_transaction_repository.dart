@@ -42,11 +42,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
       data['user_id'] = userId;
 
       // 1️⃣ Insertar la transacción
-      final response = await _supabase
-          .from('transactions')
-          .insert(data)
-          .select()
-          .single();
+      
 
       // 2️⃣ Si está asociado a presupuesto, actualiza según tipo
       if (transaction.budgetId != null) {
@@ -58,6 +54,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
               'p_amount': transaction.amount,
             },
           );
+           await _supabase
+          .from('transactions')
+          .insert(data)
+          .select()
+          .single();
         } else if (transaction.type == 'income') {
           await _supabase.rpc(
             'add_to_budget',
@@ -66,6 +67,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
               'p_amount': transaction.amount,
             },
           );
+           await _supabase
+          .from('transactions')
+          .insert(data)
+          .select()
+          .single();
         }
       }
 
@@ -79,6 +85,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
               'p_amount': transaction.amount,
             },
           );
+          await _supabase
+          .from('transactions')
+          .insert(data)
+          .select()
+          .single();
         } else {
           await _supabase.rpc(
             'increase_account_amount',
@@ -87,6 +98,11 @@ class SupabaseTransactionRepository implements TransactionRepository {
               'p_amount': transaction.amount,
             },
           );
+          await _supabase
+          .from('transactions')
+          .insert(data)
+          .select()
+          .single();
         }
       }
     } on PostgrestException catch (e) {
@@ -96,7 +112,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
           'Saldo insuficiente: no puedes gastar más de lo que tienes en la cuenta.',
         );
       } else {
-        throw Exception('Error del servidor: ${e.message}');
+        throw Exception('${e.message}');
       }
     } catch (e) {
       throw Exception('Error al crear transacción: $e');

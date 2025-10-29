@@ -408,9 +408,18 @@ budgetId: linkToBudget ? _cleanId(selectedBudgetId) : null,
 
       Navigator.pop(context);
     } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(e.toString())),
-    );
-    }
+  final message = e.toString().replaceAll('Exception: ', '');
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        message,
+        style: const TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.red,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
   }
 }
