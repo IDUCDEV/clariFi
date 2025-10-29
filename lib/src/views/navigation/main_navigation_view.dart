@@ -27,10 +27,12 @@ class MainNavigationView extends StatelessWidget {
             case 2:
               context.go('/transactions');
               break;
+            /*
             case 3:
               context.go('/reports');
               break;
-            case 4:
+            */
+            case 3:
               context.go('/settings');
               break;
           }
@@ -38,9 +40,9 @@ class MainNavigationView extends StatelessWidget {
         selectedIndex: _calculateSelectedIndex(context),
         destinations: const <NavigationDestination>[
           NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Inicio',
+            selectedIcon: Icon(Icons.account_balance),
+            icon: Icon(Icons.account_balance),
+            label: 'Cuentas',
           ),
           NavigationDestination(
             selectedIcon: Icon(Icons.pie_chart),
@@ -52,11 +54,14 @@ class MainNavigationView extends StatelessWidget {
             icon: Icon(Icons.receipt_long_outlined),
             label: 'Transacciones',
           ),
-          NavigationDestination(
+          /*
+            NavigationDestination(
             selectedIcon: Icon(Icons.bar_chart),
             icon: Icon(Icons.bar_chart_outlined),
             label: 'Reportes',
           ),
+          */
+          
           NavigationDestination(
             selectedIcon: Icon(Icons.settings),
             icon: Icon(Icons.settings_outlined),
@@ -80,11 +85,15 @@ class MainNavigationView extends StatelessWidget {
     if (location.startsWith('/transactions')) {
       return 2;
     }
-    if (location.startsWith('/reports')) {
+
+    /*
+      if (location.startsWith('/reports')) {
       return 3;
     }
+    */
+    
     if (location.startsWith('/settings') || location.startsWith('/accounts')) {
-      return 4; // Settings o rutas relacionadas como accounts
+      return 3; // Settings o rutas relacionadas como accounts
     }
     
     return 0; // Default a Inicio

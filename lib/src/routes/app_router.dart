@@ -8,7 +8,7 @@ import 'package:clarifi_app/src/views/budgets/budget_template_screen.dart';
 import 'package:clarifi_app/src/views/budgets/create_budget.dart';
 import 'package:clarifi_app/src/views/budgets/dashboard_budgets.dart';
 import 'package:clarifi_app/src/views/budgets/edit_budget.dart';
-import 'package:clarifi_app/src/views/home/home_view.dart';
+//import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/home/accounts_view.dart';
 import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
@@ -75,8 +75,7 @@ class AppRouter {
             GoRoute(
               name: 'home',
               path: '/home',
-              pageBuilder: (context, state) =>
-                  NoTransitionPage(child: const HomeView()),
+              pageBuilder: (context, state) => NoTransitionPage(child: /*const HomeView()*/ const AccountsListView()),
             ),
             GoRoute(
               name: 'budgets',
