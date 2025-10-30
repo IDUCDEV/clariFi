@@ -1,42 +1,52 @@
 
 // Based on the 'budgets' table
 class BudgetModel {
-  final String id;
-  final String name;
-  final double amount;
-  final String period;
-  final String userId;
+  final String? id;
+  final String? name;
+  final double? amount;
+  final String? period;
+  final String? userId;
+  final String? accountId;
   final String? categoryId;
-  final DateTime startDate;
+  final DateTime? startDate;
   final DateTime? endDate;
   final double? alertThreshold;
   final DateTime? createdAt;
+  final num? spentAmount;
+  final num? availableAmount; // Nuevo campo para el monto gastado
 
   BudgetModel({
-    required this.id,
-    required this.name,
-    required this.amount,
-    required this.period,
-    required this.userId,
+    this.id,
+    this.name,
+    this.amount,
+    this.period,
+    this.userId,
+    this.accountId,
     this.categoryId,
-    required this.startDate,
+    this.startDate,
     this.endDate,
     this.alertThreshold,
     this.createdAt,
+    this.spentAmount,
+    this.availableAmount,
   });
 
   factory BudgetModel.fromJson(Map<String, dynamic> json) {
     return BudgetModel(
-      id: json['id'],
-      name: json['name'],
-      amount: (json['amount'] as num).toDouble(),
-      period: json['period'],
-      userId: json['user_id'],
-      categoryId: json['category_id'],
-      startDate: DateTime.parse(json['start_date']),
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date']) : null,
+      id: json['id'] != null ? json['id'] as String : null,
+      name: json['name'] != null ? json['name'] as String : null,
+      amount: json['amount'] != null ? (json['amount'] as num).toDouble() : null,
+      period: json['period'] != null ? json['period'] as String : null,
+      userId: json['user_id'] != null ? json['user_id'] as String : null,
+      accountId: json['account_id'] != null ? json['account_id'] as String : null,
+      categoryId: json['category_id'] != null ? json['category_id'] as String : null,
+      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
+      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
       alertThreshold: json['alert_threshold'] != null ? (json['alert_threshold'] as num).toDouble() : null,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
+      spentAmount: json['spent_amount'] != null ? (json['spent_amount'] as num) : 0,
+      availableAmount: json['available_amount'] != null ? (json['available_amount'] as num) : 0,
+
     );
   }
 
@@ -47,11 +57,14 @@ class BudgetModel {
       'amount': amount,
       'period': period,
       'user_id': userId,
+      'account_id': accountId,
       'category_id': categoryId,
-      'start_date': startDate.toIso8601String(),
-      'end_date': endDate?.toIso8601String(),
+      'start_date': startDate?.toIso8601String().split('T').first,
+      'end_date': endDate?.toIso8601String().split('T').first,
       'alert_threshold': alertThreshold,
-      'created_at': createdAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String().split('T').first,
+      'spent_amount': spentAmount,
+      'available_amount': availableAmount,
     };
   }
 }

@@ -1,77 +1,88 @@
-
-import 'package:clarifi_app/src/models/account.dart';
-import 'package:clarifi_app/src/models/category.dart';
-import 'package:clarifi_app/src/models/transaction.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  final SupabaseClient client;
-
-  SupabaseService(this.client);
-
-  // --- Transactions ---
-
-  Future<List<TransactionModel>> fetchTransactions({DateTime? from, DateTime? to}) async {
+  final SupabaseClient supabase;
+  SupabaseService(this.supabase);
+  /*
+    authentication methods
+  */
+  Future<AuthResponse?> signUp(
+    String email,
+    String password,
+    String userName,
+    String fullName,
+    String country,
+    String currency,
+  ) async {
     try {
-      // Use PostgREST syntax for filtering. The response is cast to a List.
-      final response = await client
-          .from('transactions')
-          .select()
-          .eq('user_id', client.auth.currentUser!.id)
-          .order('date', ascending: false);
+      final res = await supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'user_name': userName,
+          'full_name': fullName,
+          'locale': country,
+          'currency': currency,
+        },
+      );
+      return res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<AuthResponse?> login(String email, String password) async {
+    try {
+      final res = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      return res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> logout() async {
+    await supabase.auth.signOut();
+  }
+
+  Future<bool> recoverPassword(String email) async {
+    try {
+      final isEmailExists = await checkEmailExists(email);
+      if (!isEmailExists) {
+        return false;
+      }
       
-      // Map the JSON list to a list of TransactionModel objects
-      return response.map((json) => TransactionModel.fromJson(json)).toList();
+      await supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'clarifi://reset-password',
+      );
+
+      return true;
     } catch (e) {
-      // Simple error handling
-      print('Error fetching transactions: $e');
-      return [];
+      //print('Error in recoverPassword: $e');
+      return false;
     }
   }
 
-  Future<void> insertTransaction(TransactionModel transaction) async {
+  Future<bool> updatePassword(String password) async {
     try {
-      await client.from('transactions').insert(transaction.toJson());
-      // As the design doc suggests, you might want to call an edge function 
-      // from here to update account balances or check budgets.
+      await supabase.auth.updateUser(UserAttributes(password: password));
+      return true;
     } catch (e) {
-      print('Error inserting transaction: $e');
-      // Re-throwing the error allows the ViewModel to catch it and show a message to the user.
-      rethrow;
+      //print('Error in updatePassword: $e');
+      return false;
     }
   }
 
-  // --- Accounts ---
-
-  Future<List<AccountModel>> fetchAccounts() async {
+  Future<bool> checkEmailExists(String email) async {
     try {
-      final response = await client
-          .from('accounts')
-          .select()
-          .eq('user_id', client.auth.currentUser!.id);
-
-      return response.map((json) => AccountModel.fromJson(json)).toList();
+      final response = await supabase.rpc('check_email_exists', params: {'email_input': email});
+      return response as bool;
     } catch (e) {
-      print('Error fetching accounts: $e');
-      return [];
+      //print('Error in checkEmailExists: $e');
+      return false;
     }
   }
-
-  // --- Categories ---
-
-  Future<List<CategoryModel>> fetchCategories() async {
-    try {
-      final response = await client
-          .from('categories')
-          .select()
-          .eq('user_id', client.auth.currentUser!.id);
-
-      return response.map((json) => CategoryModel.fromJson(json)).toList();
-    } catch (e) {
-      print('Error fetching categories: $e');
-      return [];
-    }
-  }
-  
-  // You can add other methods for budgets, user profiles, etc. following the same pattern.
 }

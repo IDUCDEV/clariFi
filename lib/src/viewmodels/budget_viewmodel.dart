@@ -1,6 +1,249 @@
-
+import 'package:clarifi_app/src/models/account.dart';
+import 'package:clarifi_app/src/models/budget.dart';
+import 'package:clarifi_app/src/models/category.dart';
+import 'package:clarifi_app/src/repositories/budgets/supabase_budget_repository.dart';
+import 'package:clarifi_app/src/repositories/category/category_repository.dart';
 import 'package:flutter/material.dart';
 
 class BudgetViewModel extends ChangeNotifier {
-  // Add state and logic for budgets
+  final SupabaseBudgetRepository _repository;
+  final CategoryRepository _categoryRepository; // Instancia del repositorio de categorías
+
+  BudgetViewModel(this._repository , this._categoryRepository);
+
+  // Estado de carga
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  // Estado de error
+  String? _error;
+  String? get error => _error;
+
+  //lista de presupuestos
+  List<BudgetModel> _budgets = [];
+  List<BudgetModel> get budgets => _budgets;
+
+  // presupestos filtrados por id
+  BudgetModel? _budget;
+  BudgetModel? get budget => _budget;
+
+  //total presupuestario del usuario
+  num? _totalBudgetAmount = 0.0;
+  num? get totalBudgetAmount => _totalBudgetAmount;
+
+  //total gastado de todos los presupuestos
+  num? _totalSpentAmount = 0.0;
+  num? get totalSpentAmount => _totalSpentAmount;
+  //lista de categorias
+  List<CategoryModel> _categories = [];
+  List<CategoryModel> get categories => _categories;
+
+  //cuenta asociada al presupuesto para mostrar en la UI
+  AccountModel? _accountById;
+  AccountModel? get accountById => _accountById;
+
+
+  // Métodos para cargar datos
+
+  Future<void> loadBudgets() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _budgets = await _repository.getBudgets();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // registrar presupuesto
+  Future<bool?> createBudget({
+    required String name,
+    required double amount,
+    required String period,
+    required String categoryId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double? alertThreshold,
+    required String accountId,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Verificar y asignar presupuesto a la cuenta
+      await _repository.allocateBudgetToAccount(accountId, amount);
+      // Crear el presupuesto
+      await _repository.createBudget(
+        name,
+        amount,
+        period,
+        categoryId,
+        startDate,
+        endDate,
+        alertThreshold,
+        accountId,
+      );
+      // Actualizar la lista de presupuestos después de registrar
+      await loadBudgets();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  //delete budget
+  Future<void> deleteBudget(String budgetId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Aquí iría la llamada al repositorio para eliminar el presupuesto
+      // Ejemplo:
+      await _repository.deleteBudget(budgetId);
+      // Actualizar la lista de presupuestos después de eliminar
+      await loadBudgets();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  //devolver dinro a la cuenta al eliminar presupuesto
+  Future<void> returnBudgetToAccount(String accountId, double amount) async {
+    try {
+      await _repository.returnBudgetToAccount(accountId, amount);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
+  Future<void> getBudgetById(String budgetId) async {
+    try {
+      _budget = await _repository.getBudgetById(budgetId);
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateBudget({
+    required String id,
+    required String name,
+    required String period,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double? alertThreshold,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Aquí iría la llamada al repositorio para actualizar el presupuesto
+      // Ejemplo:
+      await _repository.updateBudget(
+        id: id,
+        name: name,
+        period: period,
+        startDate: startDate,
+        endDate: endDate,
+        alertThreshold: alertThreshold,
+      );
+      // Actualizar la lista de presupuestos después de actualizar
+      await loadBudgets();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  //aqui van todo lo gastado de todos los presupuestos
+  Future<void> getTotalSpentAmount() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _totalSpentAmount = await _repository.getTotalSpentAmount();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> getTotalBudgetAmount() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _totalBudgetAmount = await _repository.getTotalBudgetAmount();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // tengo cuentas creadas
+  Future<bool> hasAccounts() async {
+    return await _repository.hasAccounts();
+  }
+
+  //cargar categorias
+  Future<void> loadCategories(String type) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      _categories = await _categoryRepository.fetchAllCategories(type: type);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // obtener cuenta asociada al presupuesto para mostrar en la UI de editar presupuesto
+  Future<void> loadAccountById(String accountId) async {
+    try {
+      print('DEBUG: loadAccountById - Iniciando carga de cuenta con ID: $accountId');
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      _accountById = await _repository.getAccountById(accountId);
+      print('DEBUG: loadAccountById - Cuenta cargada exitosamente: ${_accountById?.name}');
+    } catch (e) {
+      print('DEBUG: loadAccountById - Error al cargar cuenta: $e');
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

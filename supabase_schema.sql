@@ -125,3 +125,11 @@ CREATE POLICY "Users can manage their own notifications" ON public.notifications
 
 ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own exports" ON public.exports FOR ALL USING (auth.uid() = user_id);
+
+-- Function to check if an email exists in auth.users
+CREATE OR REPLACE FUNCTION public.check_email_exists(email_input text)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (SELECT 1 FROM auth.users WHERE email = email_input);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
