@@ -8,7 +8,7 @@ import 'package:clarifi_app/src/views/budgets/budget_template_screen.dart';
 import 'package:clarifi_app/src/views/budgets/create_budget.dart';
 import 'package:clarifi_app/src/views/budgets/dashboard_budgets.dart';
 import 'package:clarifi_app/src/views/budgets/edit_budget.dart';
-import 'package:clarifi_app/src/views/home/home_view.dart';
+//import 'package:clarifi_app/src/views/home/home_view.dart';
 import 'package:clarifi_app/src/views/home/accounts_view.dart';
 import 'package:clarifi_app/src/views/accounts/accounts_list_view.dart';
 import 'package:clarifi_app/src/views/onboarding/onboarding.dart';
@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clarifi_app/src/viewmodels/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:clarifi_app/src/views/settings/profile_view.dart';
 
 class AppRouter {
   final AuthViewModel authViewModel;
@@ -75,8 +76,7 @@ class AppRouter {
             GoRoute(
               name: 'home',
               path: '/home',
-              pageBuilder: (context, state) =>
-                  NoTransitionPage(child: const HomeView()),
+              pageBuilder: (context, state) => NoTransitionPage(child: /*const HomeView()*/ const AccountsListView()),
             ),
             GoRoute(
               name: 'budgets',
@@ -191,6 +191,10 @@ class AppRouter {
           path: '/templatesBudgets',
           builder: (context, state) => const BudgetTemplateScreen(),
         ),
+        GoRoute(
+  path: '/profile',
+  builder: (context, state) => const ProfileView(),
+),
       ],
       redirect: (context, state) {
         final bool loggedIn = authViewModel.isAuthenticated;

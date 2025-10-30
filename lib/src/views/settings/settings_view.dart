@@ -11,8 +11,12 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
     final theme = Theme.of(context);
-    
+
     return Scaffold(
+      appBar: AppBar(
+         title: const Text('Configuración general'),
+         centerTitle: true,
+       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         children: [
@@ -25,102 +29,87 @@ class SettingsView extends StatelessWidget {
             icon: Icons.person_outline,
             title: 'Perfil',
             subtitle: 'Gestiona los detalles de tu perfil',
-            onTap: () => _showDevelopmentMessage(context),
+            onTap: () => context.push('/profile'),
+            enabled: true, // 🔹 Activo
           ),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.notifications_outlined,
             title: 'Notificación',
-            subtitle: 'Gestiona las notificaciones',
-            onTap: () => _showDevelopmentMessage(context),
+            subtitle: '(Próximamente)',
           ),
-          
+
           const Divider(height: 32),
-          
+
           // ========================================
           // CONFIGURACIONES GENERALES
           // ========================================
           _buildSectionHeader('Configuraciones generales'),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.language_outlined,
             title: 'Idioma',
-            subtitle: 'Cambiar el idioma de la aplicación',
-            onTap: () => _showDevelopmentMessage(context),
+            subtitle: '(Próximamente)',
           ),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.security_outlined,
             title: 'Seguridad',
-            subtitle: 'Administrar cuentas vinculadas',
-            onTap: () => _showDevelopmentMessage(context),
+            subtitle: '(Próximamente)',
           ),
-          
+
           const Divider(height: 32),
-          
+
           // ========================================
           // CONFIGURACIONES DE LA CUENTA
           // ========================================
           _buildSectionHeader('Configuraciones de la cuenta'),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.account_balance_outlined,
             title: 'Cuentas vinculadas',
-            subtitle: 'Administrar cuentas vinculadas',
-            onTap: () => context.push('/accounts/list'),
+            subtitle: '(Próximamente)',
           ),
-          
+
           const Divider(height: 32),
-          
+
           // ========================================
           // CONFIGURACIÓN DE PRESUPUESTO
           // ========================================
           _buildSectionHeader('Configuración de presupuesto'),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.notifications_active_outlined,
             title: 'Alertas',
-            subtitle: 'Configurar alertas de presupuesto',
-            onTap: () => GoRouter.of(context).push('/alerstBudgets'),
+            subtitle: '(Próximamente)',
           ),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.description_outlined,
             title: 'Plantillas',
-            subtitle: 'Administrar plantillas de presupuesto',
-            onTap: () => GoRouter.of(context).push('/templatesBudgets'),
+            subtitle: '(Próximamente)',
           ),
-          
+
           const Divider(height: 32),
-          
+
           // ========================================
           // CONFIGURACIÓN DE INFORMES
           // ========================================
           _buildSectionHeader('Configuración de informes'),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.file_download_outlined,
             title: 'Opciones de exportación',
-            subtitle: 'Configurar exportaciones de informes',
-            onTap: () => _showDevelopmentMessage(context),
+            subtitle: '(Próximamente)',
           ),
-          
+
           const Divider(height: 32),
-          
+
           // ========================================
           // AYUDA Y SOPORTE
           // ========================================
           _buildSectionHeader('Ayuda y soporte'),
-          _buildSettingsTile(
-            context,
+          _buildDisabledTile(
             icon: Icons.help_outline,
             title: 'Centro de ayuda',
-            subtitle: 'Encuentra respuesta y apoyo',
-            onTap: () => _showDevelopmentMessage(context),
+            subtitle: '(Próximamente)',
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // ========================================
           // BOTÓN CERRAR SESIÓN
           // ========================================
@@ -137,14 +126,14 @@ class SettingsView extends StatelessWidget {
               label: const Text('Cerrar Sesión'),
             ),
           ),
-          
+
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  /// Construye el encabezado de una sección
+  /// Encabezado de sección
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -160,34 +149,40 @@ class SettingsView extends StatelessWidget {
     );
   }
 
-  /// Construye un elemento de configuración
+  /// Tile activo
   Widget _buildSettingsTile(
     BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    bool enabled = true,
   }) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
+      enabled: enabled,
+      onTap: enabled ? onTap : null,
     );
   }
 
-  /// Muestra mensaje de funcionalidad en desarrollo
-  void _showDevelopmentMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Funcionalidad en desarrollo'),
-        duration: Duration(seconds: 2),
-      ),
+  /// Tile deshabilitado (gris, sin interacción)
+  Widget _buildDisabledTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.grey),
+      title: Text(title, style: const TextStyle(color: Colors.grey)),
+      subtitle: Text(subtitle, style: const TextStyle(color: Colors.grey)),
+      enabled: false,
     );
   }
 
-  /// Muestra diálogo de confirmación para cerrar sesión
+  /// Diálogo para cerrar sesión
   void _showLogoutDialog(BuildContext context, AuthViewModel authViewModel) {
     showDialog(
       context: context,

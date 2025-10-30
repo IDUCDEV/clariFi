@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:clarifi_app/src/models/account.dart';
 import 'package:clarifi_app/src/viewmodels/account_viewmodel.dart';
 import 'package:clarifi_app/src/views/accounts/create_account_view.dart';
@@ -242,11 +243,22 @@ class _AccountsListViewState extends State<AccountsListView> {
           // Botón cerrar alineado a la izquierda
           Align(
             alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.close, size: 24),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+            child: Builder(
+              builder: (context) {
+                final currentLocation = GoRouter.of(context).routerDelegate.currentConfiguration.uri.toString();
+                developer.log('🔍 _buildHeader - currentLocation: $currentLocation', name: 'AccountsListView');
+                return currentLocation == '/home'
+                  ? const SizedBox.shrink()
+                  : IconButton(
+                      onPressed: () {
+                        developer.log('🔙 Botón cerrar presionado en ruta: $currentLocation', name: 'AccountsListView');
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.close, size: 24),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    );
+              },
             ),
           ),
         ],
